@@ -6,16 +6,16 @@
 	#address-cells = <0x02>;
 	compatible = "linux,dummy-virt";
 
-	memory@40000000 {
+	memory@6400000 {
 		reg = <0x00 0x6400000 0x00 0x80000000>;
 		device_type = "memory";
 	};
 
-	pl011@ff180000 {
+	pl011@0xf6ff0000 {
 		clock-names = "uartclk\0apb_pclk";
 		clocks = <&apbpclk &apbpclk>;
 		interrupts = <0x00 0x01 0x04>;
-		reg = <0x00 0xff180000 0x00 0x1000>;
+		reg = <0x00 0xf6ff0000 0x00 0x1000>;
 		compatible = "arm,pl011\0arm,primecell";
 	};
 
@@ -124,8 +124,8 @@
 	chosen {
 		linux,initrd-end = <0x67400000>;
 		linux,initrd-start = <0x48000000>;
-		bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xff180000 loglevel=8 rw ";
-		stdout-path = "/pl011@ff180000";
+		bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw ";
+		stdout-path = "/pl011@0xf6ff0000";
 		kaslr-seed = <0x00 0x00>;
 	};
 };
