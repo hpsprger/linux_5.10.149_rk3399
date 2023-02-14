@@ -6,8 +6,8 @@
 	#address-cells = <0x02>;
 	compatible = "linux,dummy-virt";
 
-	memory@6400000 {
-		reg = <0x00 0x6400000 0x00 0x80000000>;
+	memory@5EA00000 {
+		reg = <0x00 0x5EA00000 0x00 0x40000000>;
 		device_type = "memory";
 	};
 
