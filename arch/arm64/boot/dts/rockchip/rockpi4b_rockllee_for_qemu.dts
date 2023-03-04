@@ -1,7 +1,7 @@
 /dts-v1/;
 
 / {
-	interrupt-parent = <&gic>;
+	interrupt-parent = <&gic>; /* 各个有 interrupts 描述信息的节点，可以通过这里的描述来找到对应的父节点中断控制器，从而知道自己解析中断的相关的配置信息，比如interrupt-cells */
 	#size-cells = <0x02>;
 	#address-cells = <0x02>;
 	compatible = "linux,dummy-virt";
