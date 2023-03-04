@@ -1,7 +1,7 @@
 /dts-v1/;
 
 / {
-	interrupt-parent = <0x8005>;
+	interrupt-parent = <&gic>;
 	#size-cells = <0x02>;
 	#address-cells = <0x02>;
 	compatible = "linux,dummy-virt";
@@ -19,7 +19,7 @@
 		compatible = "arm,pl011\0arm,primecell";
 	};
 
-	intc@fee00000 {
+	gic:intc@fee00000 {
 		reg = <0x00 0xfee00000 0x00 0x10000>, /* GICD */
 		      <0x00 0xfef00000 0x00 0xc0000>, /* GICR */
 		      <0x00 0xfff00000 0x00 0x10000>, /* GICC */
@@ -34,7 +34,10 @@
 	};
 
 	timer {
-		interrupts = <0x01 0x0d 0xf04 0x01 0x0e 0xf04 0x01 0x0b 0xf04 0x01 0x0a 0xf04>;
+		interrupts = <0x01 13 0xf04>, /* ARCH_TIMER_PHYS_SECURE_PPI ==> #interrupt-cells = <0x03> ==> !!! 0x10 is offset just !!! */
+					 <0x01 14 0xf04>, /* ARCH_TIMER_PHYS_NONSECURE_PPI */
+					 <0x01 11 0xf04>, /* ARCH_TIMER_VIRT_PPI */
+					 <0x01 10 0xf04>; /* ARCH_TIMER_HYP_PPI  */
 		always-on;
 		compatible = "arm,armv8-timer\0arm,armv7-timer";
 	};
