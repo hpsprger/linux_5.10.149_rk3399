@@ -34,7 +34,7 @@
 	};
 
 	timer {
-		interrupts = <0x01 13 0xf04>, /* ARCH_TIMER_PHYS_SECURE_PPI ==> #interrupt-cells = <0x03> ==> !!! 0x10 is offset just !!! */
+		interrupts = <0x01 13 0xf04>, /* ARCH_TIMER_PHYS_SECURE_PPI ==> #interrupt-cells = <0x03> ==> !!! 0x10 is offset just !!! ==> 13为十进制 ==> hwirq = 13 + 16 = 29 */
 					 <0x01 14 0xf04>, /* ARCH_TIMER_PHYS_NONSECURE_PPI */
 					 <0x01 11 0xf04>, /* ARCH_TIMER_VIRT_PPI */
 					 <0x01 10 0xf04>; /* ARCH_TIMER_HYP_PPI  */
