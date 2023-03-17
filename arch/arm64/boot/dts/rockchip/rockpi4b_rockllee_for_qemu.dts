@@ -26,7 +26,9 @@
 		clocks = <&apbpclk &apbpclk>;
 		clock-names = "baudclk", "apb_pclk";
 		/* interrupts = <0x00 100 4>; */
-		interrupts = <0x00 2 0x04>; /* 2 + 32 = 34 */
+		/* 2 + 32 = 34 ==> spi中断 offset为2，32为SPI的偏移基值 ==> 物理中断号为34，因为qemu中 uart8250的 output pin 是连接到 GIC 的 2号input gpio 引脚上去了
+		/* 因为外部模块连接到GIC的几号引脚input gpio上, gic 报给 CPU的物理中断号 就是这个gpio的index值 */
+		interrupts = <0x00 2 0x04>; 
 		reg-shift = <0x02>;
 		reg-io-width = <0x04>;
 		status = "okay";
