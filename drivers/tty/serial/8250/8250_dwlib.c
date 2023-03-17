@@ -87,6 +87,7 @@ void dw8250_setup_port(struct uart_port *p)
 	 * ADDITIONAL_FEATURES are not enabled. No need to go any further.
 	 */
 	reg = dw8250_readl_ext(p, DW_UART_UCV);
+	printk(KERN_EMERG "Fn:%s Ln:%d ........DW_UART_UCV=0x%x\n",__func__,__LINE__, reg);
 	if (!reg)
 		return;
 
@@ -95,6 +96,7 @@ void dw8250_setup_port(struct uart_port *p)
 
 	dw8250_writel_ext(p, DW_UART_DLF, ~0U);
 	reg = dw8250_readl_ext(p, DW_UART_DLF);
+	printk(KERN_EMERG "Fn:%s Ln:%d ........DW_UART_DLF=0x%x\n",__func__,__LINE__, reg);
 	dw8250_writel_ext(p, DW_UART_DLF, 0);
 
 	if (reg) {
@@ -106,15 +108,18 @@ void dw8250_setup_port(struct uart_port *p)
 	}
 
 	reg = dw8250_readl_ext(p, DW_UART_CPR);
+	printk(KERN_EMERG "Fn:%s Ln:%d ........DW_UART_CPR=0x%x\n",__func__,__LINE__, reg);
 	if (!reg)
 		return;
 
 	/* Select the type based on FIFO */
 	if (reg & DW_UART_CPR_FIFO_MODE) {
+		printk(KERN_EMERG "Fn:%s Ln:%d ........p->type=%d  reg=0x%x\n",__func__,__LINE__, p->type, reg);
 		p->type = PORT_16550A;
 		p->flags |= UPF_FIXED_TYPE;
 		p->fifosize = DW_UART_CPR_FIFO_SIZE(reg);
 		up->capabilities = UART_CAP_FIFO;
+		printk(KERN_EMERG "Fn:%s Ln:%d ........p->type=%d  reg=0x%x\n",__func__,__LINE__, p->type, reg);
 	}
 
 	if (reg & DW_UART_CPR_AFCE_MODE)

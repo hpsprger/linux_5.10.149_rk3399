@@ -59,6 +59,7 @@
 #include "console_cmdline.h"
 #include "braille.h"
 #include "internal.h"
+#include <asm/ptrace.h>
 
 int console_printk[4] = {
 	CONSOLE_LOGLEVEL_DEFAULT,	/* console_loglevel */
@@ -2764,7 +2765,11 @@ void register_console(struct console *newcon)
 {
 	unsigned long flags;
 	struct console *bcon = NULL;
+	struct console *tmp = NULL;	
 	int err;
+
+
+	dump_stack();
 
 	for_each_console(bcon) {
 		if (WARN(bcon == newcon, "console '%s%d' already registered\n",
@@ -2812,14 +2817,20 @@ void register_console(struct console *newcon)
 
 	/* See if this console matches one we selected on the command line */
 	err = try_enable_new_console(newcon, true);
+ 
+	printk(KERN_EMERG "register_console .... 111  try_enable_new_console  err=0x%d \n", err);
 
 	/* If not, try to match against the platform default(s) */
 	if (err == -ENOENT)
 		err = try_enable_new_console(newcon, false);
 
+	printk(KERN_EMERG "register_console .... 222  try_enable_new_console  err=0x%d \n", err);
+
 	/* printk() messages are not printed to the Braille console. */
 	if (err || newcon->flags & CON_BRL)
 		return;
+
+	printk(KERN_EMERG "register_console .... 333  try_enable_new_console  err=0x%d \n", err);
 
 	/*
 	 * If we have a bootconsole, and are switching to a real console,
@@ -2870,6 +2881,12 @@ void register_console(struct console *newcon)
 		console_seq = syslog_seq;
 		logbuf_unlock_irqrestore(flags);
 	}
+	tmp = console_drivers;
+	while (tmp) {
+		printk(KERN_EMERG "register_console .... 4444  console_drivers->name=%s_%d\n", tmp->name, tmp->index);
+		tmp = tmp->next;
+	}
+
 	console_unlock();
 	console_sysfs_notify();
 

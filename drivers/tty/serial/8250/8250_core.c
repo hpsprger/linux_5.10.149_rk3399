@@ -35,6 +35,8 @@
 #include <linux/uaccess.h>
 #include <linux/pm_runtime.h>
 #include <linux/io.h>
+#include <asm/ptrace.h>
+
 #ifdef CONFIG_SPARC
 #include <linux/sunserialcore.h>
 #endif
@@ -210,6 +212,10 @@ static int serial_link_irq_chain(struct uart_8250_port *up)
 		INIT_LIST_HEAD(&up->list);
 		i->head = &up->list;
 		spin_unlock_irq(&i->lock);
+
+		printk(KERN_EMERG "Fn:%s Ln:%d ...irq=%d  name=%s  serial8250_interrupt \n",__func__,__LINE__, up->port.irq, up->port.name);
+		dump_stack();
+
 		ret = request_irq(up->port.irq, serial8250_interrupt,
 				  up->port.irqflags, up->port.name, i);
 		if (ret < 0)
@@ -493,7 +499,7 @@ static inline void serial8250_apply_quirks(struct uart_8250_port *up)
 	up->port.quirks |= skip_txen_test ? UPQ_NO_TXEN_TEST : 0;
 }
 
-static void __init serial8250_isa_init_ports(void)
+static void __init __attribute__((optimize("O0"))) serial8250_isa_init_ports(void)
 {
 	struct uart_8250_port *up;
 	static int first = 1;
@@ -535,6 +541,8 @@ static void __init serial8250_isa_init_ports(void)
 	if (share_irqs)
 		irqflag = IRQF_SHARED;
 
+	printk(KERN_EMERG "Fn:%s Ln:%d  rockllee ............... 111111\n",__func__,__LINE__);
+
 	for (i = 0, up = serial8250_ports;
 	     i < ARRAY_SIZE(old_serial_port) && i < nr_uarts;
 	     i++, up++) {
@@ -549,6 +557,8 @@ static void __init serial8250_isa_init_ports(void)
 		port->membase  = old_serial_port[i].iomem_base;
 		port->iotype   = old_serial_port[i].io_type;
 		port->regshift = old_serial_port[i].iomem_reg_shift;
+
+		printk(KERN_EMERG "Fn:%s Ln:%d  rockllee ............... 22222 i=%d, %llx, %llx \n",__func__,__LINE__,i, port->iobase, port->membase);
 
 		port->irqflags |= irqflag;
 		if (serial8250_isa_config != NULL)
@@ -984,7 +994,7 @@ static void serial_8250_overrun_backoff_work(struct work_struct *work)
  *
  *	On success the port is ready to use and the line number is returned.
  */
-int serial8250_register_8250_port(struct uart_8250_port *up)
+int __attribute__((optimize("O0"))) serial8250_register_8250_port(struct uart_8250_port *up)
 {
 	struct uart_8250_port *uart;
 	int ret = -ENOSPC;
@@ -1001,6 +1011,7 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		if (uart->port.dev)
 			uart_remove_one_port(&serial8250_reg, &uart->port);
 
+		printk(KERN_EMERG "Fn:%s Ln:%d ... uart->port.type=%d \n",__func__,__LINE__, uart->port.type);
 		uart->port.iobase       = up->port.iobase;
 		uart->port.membase      = up->port.membase;
 		uart->port.irq          = up->port.irq;
@@ -1023,6 +1034,7 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 		uart->rs485_start_tx	= up->rs485_start_tx;
 		uart->rs485_stop_tx	= up->rs485_stop_tx;
 		uart->dma		= up->dma;
+		printk(KERN_EMERG "Fn:%s Ln:%d ... uart->port.type=%d \n",__func__,__LINE__, uart->port.type);
 
 		/* Take tx_loadsz from fifosize if it wasn't set separately */
 		if (uart->port.fifosize && !uart->tx_loadsz)
@@ -1034,9 +1046,10 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 			if (ret)
 				goto err;
 		}
-
+		printk(KERN_EMERG "Fn:%s Ln:%d ... uart->port.type=%d \n",__func__,__LINE__, uart->port.type);
 		if (up->port.flags & UPF_FIXED_TYPE)
 			uart->port.type = up->port.type;
+		printk(KERN_EMERG "Fn:%s Ln:%d ... uart->port.type=%d \n",__func__,__LINE__, uart->port.type);
 
 		/*
 		 * Only call mctrl_gpio_init(), if the device has no ACPI
@@ -1093,6 +1106,7 @@ int serial8250_register_8250_port(struct uart_8250_port *up)
 						&uart->capabilities);
 
 			serial8250_apply_quirks(uart);
+			printk(KERN_EMERG "Fn:%s Ln:%d ... uart->port.type=%d \n",__func__,__LINE__, uart->port.type);
 			ret = uart_add_one_port(&serial8250_reg,
 						&uart->port);
 			if (ret)

@@ -1018,8 +1018,15 @@ static void autoconfig_16550a(struct uart_8250_port *up)
 	unsigned char status1, status2;
 	unsigned int iersave;
 
+	dump_stack();
+
+	printk(KERN_EMERG "Fn:%s Ln:%d ..........up->port.type:%d...........\n",__func__,__LINE__,up->port.type);
+
 	up->port.type = PORT_16550A;
 	up->capabilities |= UART_CAP_FIFO;
+
+	printk(KERN_EMERG "Fn:%s Ln:%d ..........up->port.type:%d...........\n",__func__,__LINE__,up->port.type);
+
 
 	if (!IS_ENABLED(CONFIG_SERIAL_8250_16550A_VARIANTS))
 		return;
@@ -3396,6 +3403,8 @@ int serial8250_console_setup(struct uart_port *port, char *options, bool probe)
 	int parity = 'n';
 	int flow = 'n';
 	int ret;
+
+	printk(KERN_EMERG "serial8250_console_setup  rockllee ............... %d -- %d 111111\n",port->iobase,port->membase);
 
 	if (!port->iobase && !port->membase)
 		return -ENODEV;

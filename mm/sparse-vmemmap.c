@@ -248,7 +248,7 @@ int __meminit vmemmap_populate_basepages(unsigned long start, unsigned long end,
 	return 0;
 }
 
-struct page * __meminit __populate_section_memmap(unsigned long pfn,
+struct page * __meminit __attribute__((optimize("O0"))) __populate_section_memmap(unsigned long pfn,
 		unsigned long nr_pages, int nid, struct vmem_altmap *altmap)
 {
 	unsigned long start = (unsigned long) pfn_to_page(pfn);

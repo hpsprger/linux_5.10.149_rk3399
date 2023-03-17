@@ -28,6 +28,7 @@
 
 #include <linux/irq.h>
 #include <linux/uaccess.h>
+#include <asm/ptrace.h>
 
 /*
  * This is used to lock changes in serial line configuration.
@@ -2362,7 +2363,9 @@ uart_report_port(struct uart_driver *drv, struct uart_port *port)
 		break;
 	}
 
-	pr_info("%s%s%s at %s (irq = %d, base_baud = %d) is a %s\n",
+	dump_stack();
+
+	pr_info("%s%s%s at %s (irq = %d, base_baud = %d) is a %s [rockllee]\n",
 	       port->dev ? dev_name(port->dev) : "",
 	       port->dev ? ": " : "",
 	       port->name,
@@ -2386,16 +2389,22 @@ uart_configure_port(struct uart_driver *drv, struct uart_state *state,
 	 * is expected to claim the resources and map the port for us.
 	 */
 	flags = 0;
+	printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 	if (port->flags & UPF_AUTO_IRQ)
 		flags |= UART_CONFIG_IRQ;
+	printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 	if (port->flags & UPF_BOOT_AUTOCONF) {
 		if (!(port->flags & UPF_FIXED_TYPE)) {
+			printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 			port->type = PORT_UNKNOWN;
 			flags |= UART_CONFIG_TYPE;
+			printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 		}
+		printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 		port->ops->config_port(port, flags);
+		printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 	}
-
+	printk(KERN_EMERG "Fn:%s Ln:%d ............ port->flags:0x%x port->type:0x%x\n",__func__,__LINE__, port->flags, port->type);
 	if (port->type != PORT_UNKNOWN) {
 		unsigned long flags;
 

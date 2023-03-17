@@ -442,7 +442,7 @@ static unsigned long __init section_map_size(void)
 	return PAGE_ALIGN(sizeof(struct page) * PAGES_PER_SECTION);
 }
 
-struct page __init *__populate_section_memmap(unsigned long pfn,
+struct page __init * __attribute__((optimize("O0"))) __populate_section_memmap(unsigned long pfn,
 		unsigned long nr_pages, int nid, struct vmem_altmap *altmap)
 {
 	unsigned long size = section_map_size();
@@ -520,7 +520,7 @@ void __weak __meminit vmemmap_populate_print_last(void)
  * Initialize sparse on a specific node. The node spans [pnum_begin, pnum_end)
  * And number of present sections in this node is map_count.
  */
-static void __init sparse_init_nid(int nid, unsigned long pnum_begin,
+static void __init __attribute__((optimize("O0")))  sparse_init_nid(int nid, unsigned long pnum_begin,
 				   unsigned long pnum_end,
 				   unsigned long map_count)
 {
@@ -573,7 +573,7 @@ failed:
  * Allocate the accumulated non-linear sections, allocate a mem_map
  * for each and record the physical to section mapping.
  */
-void __init sparse_init(void)
+void __init  __attribute__((optimize("O0")))  sparse_init(void)
 {
 	unsigned long pnum_end, pnum_begin, map_count = 1;
 	int nid_begin;
