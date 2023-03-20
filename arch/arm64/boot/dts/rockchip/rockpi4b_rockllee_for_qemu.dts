@@ -12,6 +12,10 @@
 	};
 
 /*
+	/* 	
+		bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw ";
+		stdout-path = "/pl011@0xf6ff0000"; ==> 其实 console=ttyAMA0 是因为串口注册失败了导致earlycon(pl011)没有被卸载，导致后面串口输出还是通过pl011
+	*/
 	pl011@f6ff0000 {
 		clock-names = "uartclk\0apb_pclk";
 		clocks = <&apbpclk &apbpclk>;
