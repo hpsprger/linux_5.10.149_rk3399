@@ -580,7 +580,7 @@ static void virtio_mmio_release_dev(struct device *_d)
 
 /* Platform device */
 
-static int virtio_mmio_probe(struct platform_device *pdev)
+static int __attribute__((optimize("O0")))  virtio_mmio_probe(struct platform_device *pdev)
 {
 	struct virtio_mmio_device *vm_dev;
 	unsigned long magic;

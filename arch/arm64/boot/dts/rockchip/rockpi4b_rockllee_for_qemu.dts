@@ -5,17 +5,20 @@
 	#size-cells = <0x02>;
 	#address-cells = <0x02>;
 	compatible = "linux,dummy-virt";
-
+	
+	/* uboot重新修改或创建了/memory node，uboot 会根据内存的尺寸来填充内容 ==> fdt_fixup_memory_banks ==> 8.96: uboot中修改dtb内容 */
+	/* 为了方便调试，将uboot中的调整屏蔽掉，直接用dtb这里来控制 */
 	memory@5EA00000 {
-		reg = <0x00 0x5EA00000 0x00 0x40000000>;
+		/* reg = <0x00 0x5EA00000 0x00 0x40000000>; */
+		reg = <0x00 0x5EA00000 0x00 0x20000000>;
 		device_type = "memory";
 	};
 
 /*
-	/* 	
-		bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw ";
-		stdout-path = "/pl011@0xf6ff0000"; ==> 其实 console=ttyAMA0 是因为串口注册失败了导致earlycon(pl011)没有被卸载，导致后面串口输出还是通过pl011
-	*/
+	bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw ";
+	stdout-path = "/pl011@0xf6ff0000"; ==> 其实 console=ttyAMA0 是因为串口注册失败了导致earlycon(pl011)没有被卸载，导致后面串口输出还是通过pl011
+*/
+/*
 	pl011@f6ff0000 {
 		clock-names = "uartclk\0apb_pclk";
 		clocks = <&apbpclk &apbpclk>;
@@ -24,6 +27,96 @@
 		compatible = "arm,pl011\0arm,primecell";
 	};
 */
+
+	/* virtio,mmio 其实是挂在pcie总线上的一个pcie设备 */
+	virtio_mmio@ffc10000 {
+		dma-coherent;
+		interrupts = <0x00 0x3 0x01>;
+		reg = <0x00 0xffc10000 0x00 0x200>;
+		compatible = "virtio,mmio";
+	};
+
+	/* pcie host 控制器设备节点 ==> pcie控制器驱动会去扫描pcie总线 ==> 扫描出挂在pcie总线上的所有的pcie设备 ==> pcie设备扫描出后挂到对应的总线上，然后再加载对应的pcie设备驱动，再pcie设备执行probe处理 */
+	/* 请参考<<【阅1-done】【DeviceTree】devicetree-specification-v0.4-rc1.pdf>>  2.4.4这节 */
+	pcie@10000000 {
+		interrupt-map-mask = <0x1800 0x00 0x00 0x07>; /* 与 interrupt-map 每个entry的前4个值相与，得到值后再查表 */
+		interrupt-map = <
+	  /* 参考qemu 中创建设备节点的地方的注释 create_pcie_irq_map */
+	  /*
+			uint32_t map[] = {
+                devfn << 8, 0, 0,                                  /* devfn   */
+                pin + 1,                                           /* PCI pin */
+                gic_phandle, 0, 0, irq_type, irq_nr, irq_level };  /* GIC irq */
+	  */
+	  /* bus device   fn  PCI的中断引脚号  父节点(0x8005==>intc@8000000)                 父节点对应的中断类型      父节点的物理中断号  父节点的物理中断触发类型*/
+		0x00  0x00   0x00      0x01            0x8005                          0x00 0x00       0x00                      0x03                0x04 
+		0x00  0x00   0x00      0x02            0x8005                          0x00 0x00       0x00                      0x04                0x04 
+		0x00  0x00   0x00      0x03            0x8005                          0x00 0x00       0x00                      0x05                0x04 
+		0x00  0x00   0x00      0x04            0x8005                          0x00 0x00       0x00                      0x06                0x04 
+	   0x800  0x00   0x00      0x01            0x8005                          0x00 0x00       0x00                      0x04                0x04 
+	   0x800  0x00   0x00      0x02            0x8005                          0x00 0x00       0x00                      0x05                0x04 
+	   0x800  0x00   0x00      0x03            0x8005                          0x00 0x00       0x00                      0x06                0x04 
+	   0x800  0x00   0x00      0x04            0x8005                          0x00 0x00       0x00                      0x03                0x04 
+	  0x1000  0x00   0x00      0x01            0x8005                          0x00 0x00       0x00                      0x05                0x04 
+	  0x1000  0x00   0x00      0x02            0x8005                          0x00 0x00       0x00                      0x06                0x04 
+	  0x1000  0x00   0x00      0x03            0x8005                          0x00 0x00       0x00                      0x03                0x04 
+	  0x1000  0x00   0x00      0x04            0x8005                          0x00 0x00       0x00                      0x04                0x04 
+	  0x1800  0x00   0x00      0x01            0x8005                          0x00 0x00       0x00                      0x06                0x04 
+	  0x1800  0x00   0x00      0x02            0x8005                          0x00 0x00       0x00                      0x03                0x04 
+	  0x1800  0x00   0x00      0x03            0x8005                          0x00 0x00       0x00                      0x04                0x04 
+	  0x1800  0x00   0x00      0x04            0x8005                          0x00 0x00       0x00                      0x05                0x04>;
+		/* ranges 表示 地址空间的映射 */
+		/*
+		   最终第一行说明的意思就是：片选0，偏移0（选中了网卡），被映射到CPU地址空间的0x10100000~0x10110000中，地址长度为0x10000。
+		   理解下来，可以认为ranges的格式为<子节点address 父节点address 子节点size>, 而address长度由对应cells决定
+		   ranges属性为一个地址转换表。表中的每一行都包含了子地址、父地址、在各自地址空间内的区域大小。他们的大小（包含的cell）分别由子节点的address-cells的值、父节点的address-cells的值和子节点的size-cells来决定
+		   
+		   像之前描述过的本地总线一样，PCI地址空间与CPU地址空间是完全分离的，所以这里需要通过定义ranges属性进行地址转化。
+		   #address-cells定义PCI使用3个cell，并且PCI的地址范围通过两个单位就可以解读。所以，首先的问题就是，为什么需要用3个32位的cell来描述一个PCI地址。
+		  
+		   像之前描述过的本地总线一样，PCI地址空间与CPU地址空间是完全分离的，所以这里需要通过定义ranges属性进行地址转化。
+		   #address-cells定义PCI使用3个cell，并且PCI的地址范围通过两个单位就可以解读。所以，首先的问题就是，为什么需要用3个32位的cell来描述一个PCI地址。
+		   这三个cell分别代表物理地址高位、中位、低位：
+		   1 phys.high cell : npt000ss bbbbbbbb dddddfff rrrrrrrr
+		   2 phys.mid cell : hhhhhhh hhhhhhhh hhhhhhhh hhhhhhh
+		   3 phys.low cell : llllllll llllllll llllllll llllllll
+		   PCI地址为64位宽度，编码在phys.mid和phys.low中。
+		   真正重要的东西在于phys.high这一位空间中：
+		   n：代表重申请空间标志（这里没有使用）
+		   p：代表预读空间（缓存）标志
+		   t：别名地址标志（这里没有使用）
+		   ss：空间代码
+		   	00：设置空间
+		   	01：IO空间
+		   	10：32位存储空间
+		   	11：64位存储空间
+		   bbbbbbbb： PCI总线号。PCI有可能是层次性架构，所以我们可能需要区分一些子-总线
+		   ddddd：设备号，通常由初始化设备选择信号IDSEL连接时申请。
+		   fff：功能序号，有些多功能PCI设备可能用到。
+		   rrrrrrrr：注册号，在设置周期使用
+		*/
+		/* ranges = <0x83000000 0x0 0xfa000000 0x0 0xfa000000 0x0 0x1e00000>;
+			     ==> 0x83000000 表示一些PCIE地址空间的属性， 
+				     0x0 0xfa000000表示PCIE地址， 
+					 0x0 0xfa000000表示CPU地址空间，
+					 0x0 0x1e00000长度
+				 ==> 父节点address-cells为1，子节点address-cells为3， 子节点size-cells为2
+		*/
+		ranges = <0x1000000 0x00 0x00       0x00 0x3eff0000 0x00 0x10000 
+				  0x2000000 0x00 0x10000000 0x00 0x10000000 0x00 0x2eff0000 
+				  0x3000000 0x80 0x00       0x80 0x00       0x80 0x00>;
+		reg = <0x40 0x10000000 0x00 0x10000000>;
+		msi-parent = <0x8006>;
+		dma-coherent; /* dma一致性 */
+		bus-range = <0x00 0xff>; /* bus-range一般指的是该设备(一般为RC)下的pci总线号范围 */
+		linux,pci-domain = <0x00>;
+		#size-cells = <0x02>;
+		#interrupt-cells = <0x01>; /* 指示interrupt-map中用1个值来表示地址 */
+		#address-cells = <0x03>;   /* 指示interrupt-map中用3个值来表示中断 */
+		device_type = "pci";
+		compatible = "pci-host-ecam-generic";
+	};
+
 	uart2:serial@ff1a0000 {
 		compatible = "rockchip,rk3399-uart", "snps,dw-apb-uart";
 		reg = <0x0 0xff1a0000 0x0 0x100>;
@@ -153,7 +246,7 @@
 		/* roclpi4b 上用的是 console=ttyS2 ==> 因为他确实有多个串口，而且用的就是第2个串口； 而qemu上只模拟了一个串口，所以需要用 ttyS0 */
 		bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=8 rw ";
 		/* stdout-path = "/pl011@0xf6ff0000"; */
-		stdout-path = "uart2:1500000n8";
+		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */
 		kaslr-seed = <0x00 0x00>;
 	};
 };
