@@ -44,9 +44,9 @@
 	  /* 参考qemu 中创建设备节点的地方的注释 create_pcie_irq_map */
 	  /*
 			uint32_t map[] = {
-                devfn << 8, 0, 0,                                  /* devfn   */
-                pin + 1,                                           /* PCI pin */
-                gic_phandle, 0, 0, irq_type, irq_nr, irq_level };  /* GIC irq */
+                devfn << 8, 0, 0,                                   ==> devfn   
+                pin + 1,                                            ==> PCI pin 
+                gic_phandle, 0, 0, irq_type, irq_nr, irq_level };   ==> GIC irq 
 	  */
 	  /* bus device   fn  PCI的中断引脚号  父节点(0x8005==>intc@8000000)                 父节点对应的中断类型      父节点的物理中断号  父节点的物理中断触发类型*/
 		0x00  0x00   0x00      0x01            0x8005                          0x00 0x00       0x00                      0x03                0x04 
