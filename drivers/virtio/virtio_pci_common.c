@@ -349,7 +349,7 @@ error_find:
 	return err;
 }
 
-static int vp_find_vqs_intx(struct virtio_device *vdev, unsigned nvqs,
+static int __attribute__((optimize("O0"))) vp_find_vqs_intx(struct virtio_device *vdev, unsigned nvqs,
 		struct virtqueue *vqs[], vq_callback_t *callbacks[],
 		const char * const names[], const bool *ctx)
 {
