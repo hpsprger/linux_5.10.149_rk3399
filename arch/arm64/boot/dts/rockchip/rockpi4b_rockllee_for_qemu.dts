@@ -113,7 +113,7 @@
 				  0x02000000        0x00000000       0x10000000         0x00000000 0x90000000         0x00000000 0x2eff0000    /* [RK3399_PCIE_MMIO] = { 0x90000000, 0x2eff0000【751MB】 }, */
 				  0x03000000        0x00000080       0x00000000         0x00000080 0x00000000         0x00000080 0x00000000>;  /* [RK3399_HIGH_PCIE_MMIO]  = { 0x3eff0000, 0x800x00000000【512GB】 }, */
 		reg = <0x40 0x10000000 0x00 0x10000000>; /*  0x4010000000&256MB ==> RK3399_HIGH_PCIE_ECAM */
-		msi-parent = <0x8006>;
+		/* msi-parent = <0x8006>; */
 		dma-coherent; /* dma一致性 */
 		bus-range = <0x00 0xff>; /* bus-range一般指的是该设备(一般为RC)下的pci总线号范围 */
 		linux,pci-domain = <0x00>;
