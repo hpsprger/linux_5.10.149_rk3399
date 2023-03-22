@@ -1,6 +1,7 @@
 /dts-v1/;
 
 / {
+	/* interrupt-parent  = <&xx>; &xx就是取值某一个节点，指定上一级中断控制器 */
 	interrupt-parent = <&gic>; /* 各个有 interrupts 描述信息的节点，可以通过这里的描述来找到对应的父节点中断控制器，从而知道自己解析中断的相关的配置信息，比如interrupt-cells */
 	#size-cells = <0x02>;
 	#address-cells = <0x02>;
@@ -113,7 +114,30 @@
 				  0x02000000        0x00000000       0x10000000         0x00000000 0x90000000         0x00000000 0x2eff0000    /* [RK3399_PCIE_MMIO] = { 0x90000000, 0x2eff0000【751MB】 }, */
 				  0x03000000        0x00000080       0x00000000         0x00000080 0x00000000         0x00000080 0x00000000>;  /* [RK3399_HIGH_PCIE_MMIO]  = { 0x3eff0000, 0x800x00000000【512GB】 }, */
 		reg = <0x40 0x10000000 0x00 0x10000000>; /*  0x4010000000&256MB ==> RK3399_HIGH_PCIE_ECAM */
-		/* msi-parent = <0x8006>; */
+
+		/* MSI控制器配置，分配msi-specifier数据 */
+		/* &its 这个标签是在 节点interrupt-controller@fee00000 中定义的 */
+		/* 后面仔细看下
+	    /* 参考 <<第十五课:MSI_MSI-X中断之源码分析>>
+		/*     在gic的节点中，有一个its子节点
+		/*     its节点对应的驱动程序 在 irq-gic-its.c  这里面它去创建了一个irq_domain域，通过irq_domain_add_tree 
+		/*     PCIE控制器本身，也是用的这个设备树，只不过它根据这个设备树节点its又 创建了另外一个域
+		/*  
+		/*     1:在PCIE控制器的设备树里面，有一项 msi-map， 从这里开始分析，PCIE控制器识别到一个设备后，这个设备有 总线号  设备号 功能号【BDF】，
+		/* 		这三个数值会构造出一个数值 叫做 request ID, 我们用  request ID 来表示这个设备，
+		/* 		这个设备会对应 会对应到上面的MSI中断，比如对应到 图中 域2 中的 哪个中断呢？ 又对应到 域1 中的哪个中断呢？ 
+		/* 		又对应到 域4 中的哪个中断呢？
+		/* 		有个映射关系，msi-map = <0x0  &its  0x0  0x1000>;  
+		/* 		第一个0x0表示RID，如果RID 等于0的话就 对应 &its 这个控制器的第0号中断（第三个值0x），如果RID 等于1的话就 对应 &its 这个控制器的第1号中断，RID 就是 request ID, 
+		/*     2:也就是根据 msi-map， 将RID传入  msi-map，得到一个数值，如图，0对0，1对1，
+		/* 		这个数值仍然叫RID，也就是 这个设备将会去使用 这个 its 这个中断控制器里面的 这个RID中断，这个中断用RID来标记，
+		/*   msi-map 是用来把PCIe设备映射到MSI控制器，它的格式为
+		/* msi-map = <rid-base &msi-controller msi-base length>; */
+		/*            rid-base：第1个Request ID，就是使用<bus, dev, function>组成的一个数字 */
+		/*            msi-controller：这个PCIe设备映射到哪个MSI控制器 */
+		/*            msi-base：第1个PCIe设备映射到MSI控制器哪个中断 */
+		/*            length：能映射多少个设备 */
+		msi-map = <0x0 &its 0x0 0x1000>;
 		dma-coherent; /* dma一致性 */
 		bus-range = <0x00 0xff>; /* bus-range一般指的是该设备(一般为RC)下的pci总线号范围 */
 		linux,pci-domain = <0x00>;
@@ -138,6 +162,7 @@
 		status = "okay";
 	};
 
+	/* irq_domain 以及 中断相关的处理流程，请参考:<<12-virq--hwirq--irqdomain--中断处理转换注册处理流程【非常好】.emmx>> */
 	gic:intc@fee00000 {
 		reg = <0x00 0xfee00000 0x00 0x10000>, /* GICD */
 		      <0x00 0xfef00000 0x00 0xc0000>, /* GICR */
@@ -150,6 +175,25 @@
 		#address-cells = <0x02>;
 		interrupt-controller;
 		#interrupt-cells = <0x03>;
+		/* 参考 ==> 12-PCIE---INTX---MSI---MSI-X机制研究.emmx */
+		/* ITS的基地址就是下面reg属性中的 0xfee20000 ， devmem2 是一个可以读任意物理地址的工具 */
+		/* 在gic的节点中，有一个its子节点 */
+		/* its节点对应的驱动程序 在 irq-gic-its.c  这里面它去创建了一个irq_domain域，通过irq_domain_add_tree  */
+		/* PCIE控制器本身，也是用的这个设备树，只不过它根据这个设备树节点its又 创建了另外一个域 */
+		its: interrupt-controller@fee20000 {
+			compatible = "arm,gic-v3-its";
+			/* msi-controller:表示节点是MSI控制器 */
+			/* msi-controller:表示是一个MSI（Message Signaled Interrupt）控制器节点，这里需要注意的是，有的SoC中断控制器使用的是GICv2版本，而GICv2并不支持MSI，所以会导致该功能的缺失 */
+			msi-controller;
+			#msi-cells = <1>;
+			/* ITS的基地址是 下面的前两个数值，后面的是空间的长度 */
+			/* 怎么发出MSI/MSI-X中断?? ==> PCIe设备向发出中断，它发出TLP包，往某个地址写入某个数据即可 */
+			/* 上面说的某个地址指的就是 ==>  ITS节点里面的这个reg 指定的基地址了 ==> 往哪个地址？GICv3 ITS的GITS_TRANSLATER寄存器，TLP包里使用的是PCI地址 */
+			/* 写什么数据？0、1、2、……，要发出第1个中断时写0，要发出第2个中断时写1，…… */
+			/* 也就是往下面的地址空间写数据就会触发 MSI-X中断 */
+			/* 下面的地址是自己规划的，比如qemu中，我用的是内存空间是[RK3399_GIC_ITS] = { 0xfff30000,   RK3399_128K},  */
+			reg = <0x0 0xfff30000 0x0 0x20000>;
+		};
 	};
 
 	timer {
