@@ -91,7 +91,7 @@
 		   p：代表预读空间（缓存）标志
 		   t：别名地址标志（这里没有使用）
 		   ss：空间代码
-		   	00：设置空间
+		   	00：配置空间
 		   	01：IO空间
 		   	10：32位存储空间
 		   	11：64位存储空间
@@ -109,9 +109,26 @@
 		*/
 		/* pcie地址空间 与 CPU地址空间 之间的映射 ==> address translation ==> Region 0, Region 1 -- 32 */
 		/* 为各个pcie设备配置pcie地址时 ==> 可以使用 cpu_pa == pcie_bus_addr 的方式 */
-		/*        phys.high(pcie)   phys.mid(pcie)   phys.low(pcie)     CPU物理地址(2Byte)            地址空间长度(2Byte)  */
-		ranges = <0x01000000        0x00000000       0x00000000         0x00000000 0xbeff0000         0x00000000 0x00010000    /* [RK3399_PCIE_PIO]  = { 0xbeff0000, 0x00010000 【64K】}, */
-				  0x02000000        0x00000000       0x10000000         0x00000000 0x90000000         0x00000000 0x2eff0000    /* [RK3399_PCIE_MMIO] = { 0x90000000, 0x2eff0000【751MB】 }, */
+		/* ranges表示资源配置信息，7个元素为一组，第一个元素表示属性，第二个和第三个为pci域地址，第四个和第五个为CPU域地址空间 */
+		/*                                        第六个和第七个为size，表示设备将访问CPU域的地址时，将转化到pci域的地址 */
+		/*    ranges的一个entry ==> phys.high(pcie空间属性)   phys.mid(pcie_addr)   phys.low(pcie_addr)     CPU物理地址(2Byte)     地址空间长度(2Byte)  */
+		/*==> !!!!!!!!!!!!!!!!!!!!!!!!! 通过在DTS中PCIE的这个设备节点，来定义cpu_addr  与 pcie_addr 的地址映射关系  */
+		/*==> !!!!!!!!!!!!!!!!!!!!!!!!! 这个映射关系也就相当于pcie控制器的各个region0-32, ATU一样，指定了地址转换关系了，非常重要  */
+		/*==> 下面: 0x83000000 表示一些PCIE地址空间的属性， 0x0 0xfa000000表示PCIE地址， 0x0 0xfa000000表示CPU地址空间，0x0 0x1e00000长度 */
+		/*==> 比如RK3399，我们知道，他有32个region,每个regison 对应一组寄存器， */
+		/*    这组寄存器里面 就是 用来描述 CPU_ADDR --> PCIE_ADDR的映射关系的，也就是你访问CPU地址空间的XXX物理地址， */
+		/*    PCIE控制器 就会通过 这个region寄存器里面的信息 来将这这个XXX物理地址 转换为 对应的PCIE 地址， */
+		/*    在PCIE总线上传输出去并访问到目的空间，那么这个映射关系，软件怎么来感知配置呢？？ */
+		/*    就是通过DTS的PCIE设备节点的ranges属性来做到了，如下  */
+		/*==> 最后可以在linux上，可以通过 cat /proc/iomem 来看到这个节点对应的各个CPU的物理地址空间范围的 */
+		/*==> 第九课:设备树  MEM&IO的区别  配置ATUPCIe_Host驱动分析之地址映射    RK3399_PCIe_Host驱动分析_地址映射 */
+		/* phys.high(pcie空间属性) ==> 0x01000000 ==> io空间       */
+		/* phys.high(pcie空间属性) ==> 0x02000000 ==> 32位存储空间 */
+		/* phys.high(pcie空间属性) ==> 0x03000000 ==> 64位存储空间 */
+		/* CPU地址空间已经在QEMU中各个模块都已经配置好了，所以一般将PCIE地址与CPU物理地址配置成一样的就好了 */
+		/* 血泪的教训: 这里ranges映射的时候 一定要一一映射，也就是pcie_addr 要等于 CPU addr，否则PCIE设备无法上报中断，导致网口不通，改为一一映射后就通了，可能是驱动写的不好，才有这个限制 */
+		ranges = <0x01000000        0x00000000       0xbeff0000         0x00000000 0xbeff0000         0x00000000 0x00010000    /* [RK3399_PCIE_PIO]  = { 0xbeff0000, 0x00010000 【64K】}, */
+				  0x02000000        0x00000000       0x90000000         0x00000000 0x90000000         0x00000000 0x2eff0000    /* [RK3399_PCIE_MMIO] = { 0x90000000, 0x2eff0000【751MB】 }, */
 				  0x03000000        0x00000080       0x00000000         0x00000080 0x00000000         0x00000080 0x00000000>;  /* [RK3399_HIGH_PCIE_MMIO]  = { 0x3eff0000, 0x800x00000000【512GB】 }, */
 		reg = <0x40 0x10000000 0x00 0x10000000>; /*  0x4010000000&256MB ==> RK3399_HIGH_PCIE_ECAM */
 
@@ -180,7 +197,7 @@
 		/* 在gic的节点中，有一个its子节点 */
 		/* its节点对应的驱动程序 在 irq-gic-its.c  这里面它去创建了一个irq_domain域，通过irq_domain_add_tree  */
 		/* PCIE控制器本身，也是用的这个设备树，只不过它根据这个设备树节点its又 创建了另外一个域 */
-		its: interrupt-controller@fee20000 {
+		its: interrupt-controller@fff30000 {
 			compatible = "arm,gic-v3-its";
 			/* msi-controller:表示节点是MSI控制器 */
 			/* msi-controller:表示是一个MSI（Message Signaled Interrupt）控制器节点，这里需要注意的是，有的SoC中断控制器使用的是GICv2版本，而GICv2并不支持MSI，所以会导致该功能的缺失 */
@@ -192,9 +209,24 @@
 			/* 写什么数据？0、1、2、……，要发出第1个中断时写0，要发出第2个中断时写1，…… */
 			/* 也就是往下面的地址空间写数据就会触发 MSI-X中断 */
 			/* 下面的地址是自己规划的，比如qemu中，我用的是内存空间是[RK3399_GIC_ITS] = { 0xfff30000,   RK3399_128K},  */
-			reg = <0x0 0xfff30000 0x0 0x20000>;
-		};
-	};
+			/* gic-v3设备节点中的子设备节点ITS（Interrupt Translation Services）：一个GIC中有1到多个ITS设备，ITS设备用于将消息信号中断(MSI)路由到cpu，ITS设备节点的描述如下：*/
+			/* compatible：必须包含字符串"arm,gic-v3-its"，表示这是一个ITS设备 */
+			/* msi-controller：标识该设备节点为MSI控制器 */
+			/* #msi-cells：必须是1，这里面是MSI设备的DeviceID */
+			/* reg：ITS寄存器的物理基地址 */
+			/* https://blog.csdn.net/wyy4045/article/details/104827111 */ 
+			/*  主控芯片中有一个GICV3的中断控制器，我们的设备想要发出基于消息的中断  只要 去 写 这个中断控制器中的 GITS_TRANSLATER寄存器 就可以了 */
+			/* 这个寄存器是位于 主控芯片中的 中断控制器中的，它的地址是CPU地址，我们的PCIE设备 需要得到 这个 寄存器的CPU地址 对应的PCIE地址       */
+			/* PCIE控制器会去识别出这些PCIE设备，并把这个 前面说的这个CPU地址( GITS_TRANSLATER寄存器的地址)转换为PCIE地址 写给这些设备 */
+	     	/* 对于 使用MSI中断的PCIE设备 ==> 这些地址是写在配置空间里面的 */
+	     	/* 对于 使用MSI-X中断的PCIE设备 ==> 它会从配置空间里面来找  我的那些中断向量信息 保存在哪一个内存空间的哪个位置上（Table BAR + Table Offset），==> 配置空间的 Vector table: BAR=1 offset=00000000 */
+			/*                                  根据这两个信息在 PCIE设备的内存中找到自己的中断向量表的位置，中断向量表的每一行就对应一个中断， */
+			/*                                  我们需要把 GITS_TRANSLATER寄存器 对应的PCIE地址 写到这个 向量表的每一个ENTRY中去，当PCIE设备想发出MSI-X中断的时候， */
+			/*									它会把DWORD2中的数据 写入到 DWORD1+DWORD0 指向的 空间中（也就是 GITS_TRANSLATER寄存器）来产生MSI-X中断， */			
+			/* 正常情况下，用MSIX中断， PCIE设备 触发中断的中断向量表的每个entry 中 都有存放  GICV3 的  GITS_TRANSLATER寄存器的PCIE地址，我去检查下 对应的内存中的数据看看 */
+			reg = <0x0 0xfff30000 0x0 0x20000>; /* ==> 0xfff30000 就是 GICV3 的 ITS模块的寄存器空间了，这个空间里面包含有 GITS_TRANSLATER寄存器，GicV3 ITS组件【qdev_new(itsclass)】相关的寄存器空间 [RK3399_GIC_ITS]  =  { 0xfff30000,   RK3399_128K}, */
+		};                                      /* 如果是这样的话, PCIE设备的触发中断的向量表中 每个entry ==> DWORD1+DWORD0 就是 GITS_TRANSLATER寄存器 对应的PCIE地址 */
+	};                                          /* 这样的话，如果有几个中断，那么应该就会有几个ENTRY 有这个PCIE地址值，虽然我们可能不知道这个GITS_TRANSLATER寄存器的PCIE地址，但我们可以用这个特点来鉴别向量表是否正常 */
 
 	timer {
 		interrupts = <0x01 13 0xf04>, /* ARCH_TIMER_PHYS_SECURE_PPI ==> #interrupt-cells = <0x03> ==> !!! 0x10 is offset just !!! ==> 13为十进制 ==> hwirq = 13 + 16 = 29 */
