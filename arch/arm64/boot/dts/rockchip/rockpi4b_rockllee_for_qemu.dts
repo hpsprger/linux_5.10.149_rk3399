@@ -27,8 +27,19 @@ Total: 14097.576 ms
 	/* uboot重新修改或创建了/memory node，uboot 会根据内存的尺寸来填充内容 ==> fdt_fixup_memory_banks ==> 8.96: uboot中修改dtb内容 */
 	/* 为了方便调试，将uboot中的调整屏蔽掉，直接用dtb这里来控制 */
 	memory@5EA00000 {
-		/* reg = <0x00 0x5EA00000 0x00 0x40000000>; */
-		reg = <0x00 0x200000 0x00 0x7FE00000>;  /* qemu中实现的系统内存空间是 0x0--0x80000000,所以注意这里不要超过范围了，物理地址不能超过0x80000000，否则有可能内核初始化就崩溃了，分配到的物理地址CPU不能访问的 */
+		/* reg = <0x00 0x5EA00000 0x00 0x40000000>; */  /* booti  0x13800000【kernel】    0x2c800000:0x1f400000【ramdisk】     0x12E00000【dtb】 */
+		/* reg = <0x00 0x200000 0x00 0x7FE00000>;   */  /* qemu中实现的系统内存空间是 0x0--0x80000000,所以注意这里不要超过范围了，物理地址不能超过 0x80000000，否则有可能内核初始化就崩溃了，分配到的物理地址CPU不能访问的 */
+		/* reg = <0x00 0x4BD00000 0x00 0x34300000>;  ==> 【没有覆盖 ramdisk img】报错 initrd not fully accessible via the linear mapping -- please check your bootloader */
+		/* reg = <0x00 0x2c800000 0x00 0x53800000>;  ==> 【没有覆盖 kernel  img】报错 Unable to handle kernel paging request at virtual address ffffff801520bff8 */
+		/* reg = <0x00 0x13800000 0x00 0x6C800000>;  ==> 【没有覆盖 dtb     img】可以运行起来 */
+		/*                                        */   
+		/*	# cat /proc/iomem                     */
+		/*	13800000-7fffffff : System RAM        */
+		/*	  13800000-149bffff : Kernel code     */
+		/*	  149c0000-14f2ffff : reserved        */
+		/*	  14f30000-1529ffff : Kernel data     */
+		/*			device_type = "memory";       */
+		reg = <0x00 0x200000 0x00 0x7FE00000>;
 		device_type = "memory";
 	};
 
