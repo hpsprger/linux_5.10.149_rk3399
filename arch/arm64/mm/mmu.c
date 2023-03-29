@@ -296,7 +296,7 @@ static inline bool use_1G_block(unsigned long addr, unsigned long next,
 	return true;
 }
 
-static void alloc_init_pud(pgd_t *pgdp, unsigned long addr, unsigned long end,
+static void __attribute__((optimize("O1")))  alloc_init_pud(pgd_t *pgdp, unsigned long addr, unsigned long end,
 			   phys_addr_t phys, pgprot_t prot,
 			   phys_addr_t (*pgtable_alloc)(int),
 			   int flags)
