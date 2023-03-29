@@ -55,7 +55,7 @@ static int __init crd_load(decompress_fn deco);
  *	lz4
  */
 static int __init
-identify_ramdisk_image(struct file *file, loff_t pos,
+__attribute__((optimize("O0"))) identify_ramdisk_image(struct file *file, loff_t pos,
 		decompress_fn *decompressor)
 {
 	const int size = 512;

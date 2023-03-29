@@ -340,11 +340,11 @@ Total: 14097.576 ms
 	};
 
 	chosen {
-		/* dts 中用这两个参数来指定ramdisk 的 起始与结束地址，有了这两个后，uboot传入的参数会无效，加这两个参数的目的就是有很多的时候uboot会重定义ramdisk，uboot */
+		/* dts 中用这两个参数来指定ramdisk 的 起始与结束地址 ==> 内核会扫描DTB获取这两个参数后，内核才知道initrd的起始与结束位置的，否则内核会加载ramdisk失败 */
 		/* uboot重定位了ramdisk后，就是通过在dts中新加linux,initrd-start linux,initrd-end 的方式来告知内核的 */
-		/* 因为我想用booti命令行 或者 bootargs来 控制，所以这里直接注释掉了 */
-		/* linux,initrd-end = <0x67400000>;    */
-		/* linux,initrd-start = <0x48000000>;  */
+		/* 下面两个参数是必须的 ==> 15-文件系统挂载过程【ramdisk等】.emmx ==> early_init_dt_check_for_initrd 内核会扫描DTB获取这两个参数后，内核才知道initrd的起始与结束位置的，否则内核会加载ramdisk失败 ，之前不用加是因为uboot自动帮我们加好了，现在把uboot的调整去掉了，所以就要自己加上了，内核才能正常加载initrd */
+		linux,initrd-end = <0x4bc00000>;
+		linux,initrd-start = <0x2c800000>;
 		/* bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw "; */
 		/* roclpi4b 上用的是 console=ttyS2 ==> 因为他确实有多个串口，而且用的就是第2个串口； 而qemu上只模拟了一个串口，所以需要用 ttyS0 */
 		bootargs = "root=/dev/ram0  ramdisk_size=0x1f400000  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=8 rw ";
