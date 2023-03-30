@@ -57,13 +57,14 @@ Total: 14097.576 ms
 	};
 */
 
-	/* virtio,mmio 其实是挂在pcie总线上的一个pcie设备 */
-	virtio_mmio@ffc10000 {
-		dma-coherent;
-		interrupts = <0x00 0x3 0x01>;
-		reg = <0x00 0xffc10000 0x00 0x200>;
-		compatible = "virtio,mmio";
-	};
+/* virtio,mmio 其实是挂在pcie总线上的一个pcie设备  ==> virtio device  ==> 没有这个节点 网卡也是能正常工作了，所以与这个节点无关 */
+/*	virtio_mmio@ffc10000 {                                                   */
+/*		dma-coherent;                                                        */
+/*		interrupts = <0x00 0x3 0x01>;                                        */
+/*		reg = <0x00 0xffc10000 0x00 0x200>;                                  */
+/*		compatible = "virtio,mmio";                                          */
+/*	};                                                                       */
+/*                                                                           */
 
 	/* pcie host 控制器设备节点 ==> pcie控制器驱动会去扫描pcie总线 ==> 扫描出挂在pcie总线上的所有的pcie设备 ==> pcie设备扫描出后挂到对应的总线上，然后再加载对应的pcie设备驱动，再pcie设备执行probe处理 */
 	/* 请参考<<【阅1-done】【DeviceTree】devicetree-specification-v0.4-rc1.pdf>>  2.4.4这节 */
