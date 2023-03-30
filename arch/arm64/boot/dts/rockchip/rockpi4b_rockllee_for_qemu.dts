@@ -78,7 +78,7 @@ Total: 14097.576 ms
 		#address-cells = <0x03>;   /* 指示interrupt-map中用3个值来表示中断 */
 		device_type = "pci";
 		compatible = "pci-host-ecam-generic";
-		interrupt-map-mask = <0xff0000 0x00 0x00 0x07>; /* 与 interrupt-map 每个entry的前4个值相与，得到值后再查表 */
+		interrupt-map-mask = <0x00ffff00 0x00 0x00 0x07>; /* 与 interrupt-map 每个entry的前4个值相与，得到值后再查表 */
 		interrupt-map = <
 	  /* 参考qemu 中创建设备节点的地方的注释 create_pcie_irq_map */
 	  /* 
@@ -99,16 +99,16 @@ Total: 14097.576 ms
 	  /*  00:01.0 ==> VIRTIO-NET设备 */
 	  /*  00:02.0 ==> SDHCI-PCI设备  */
 	  /*  下面编写BDF的信息，按 of_irq_parse_pci 这个函数中组织的方式来编写 */
-	  /*  SDHCI-PCIE设备的 Bus:0  devfn:0x10 */
 	  /*  virtio-net设备的 Bus:0  devfn:0x8  */
+	  /*  SDHCI-PCIE设备的 Bus:0  devfn:0x10 */
 	  /*  nterrupt-map-mask = <0x00000000 0x00 0x00 0x07>; ！！！！注意要配合掩码一起使用 */
 	  /*  (pdev->bus->number << 16) | (pdev->devfn << 8) */
-	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x4号中断的物理中断号就是 0x36 ==>  14:          0          0          0          0     GICv3  36 Level     mmc0 */
-	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x5号中断的物理中断号就是 0x37 ==> 不过 virtio-net用的是msi-x中断，就没有用INTX中断了 */
+	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x4号中断的物理中断号就是 0x36 ==>  不过 virtio-net用的是msi-x中断，就没有用INTX中断了 */
+	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x5号中断的物理中断号就是 0x37 ==>  18:  0   0   0   0   GICv3  37 Level     mmc0 */
 	  /* PCEI控制器肯定是可以同时支持INTX MSI MSIX 中断机制的，毕竟要挂各种的硬件设备，但是PCIE设备一般就只实现一种中断机制就好了      */
 	  /* (bus<<16)|(devfn<<8)   固定为0   固定为0  PCI的中断引脚号    父节点    这是啥？(必须的，补充对齐？)  映射的物理中断类型    映射的物理中断号   映射的物理中断触发类型*/
 	        0x00000800           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x04                 0x04 																								        
-	        0x00001000           0x00      0x00         0x02            &gic           0x00  0x00                  0x00                 0x05                 0x04>;
+	        0x00001000           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x05                 0x04>;
 		/* ranges 表示 地址空间的映射 */
 		/*
 		   最终第一行说明的意思就是：片选0，偏移0（选中了网卡），被映射到CPU地址空间的0x10100000~0x10110000中，地址长度为0x10000。
@@ -365,7 +365,7 @@ Total: 14097.576 ms
 		linux,initrd-start = <0x2c800000>;
 		/* bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw "; */
 		/* roclpi4b 上用的是 console=ttyS2 ==> 因为他确实有多个串口，而且用的就是第2个串口； 而qemu上只模拟了一个串口，所以需要用 ttyS0 */
-		bootargs = "root=/dev/ram0  ramdisk_size=0x1f400000  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=8 rw ";
+		bootargs = "root=/dev/ram0  ramdisk_size=0x1f400000  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=0 rw ";
 		/* stdout-path = "/pl011@0xf6ff0000"; */
 		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */
 		kaslr-seed = <0x00 0x00>; 
