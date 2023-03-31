@@ -96,8 +96,8 @@ Total: 14097.576 ms
 	  /*           laddr[1] = laddr[2] = cpu_to_be32(0);                                   ==>  __be32 laddr[3] ==> 地址是3个字节 ==> laddr[1] & laddr[2] 都是0              */
 	  /* 每个slot(对应一个pcie设备, BDF) 4个中断 inta intb intc intd*/
 	  /* 下面这个表，对于使用INTX 的中断来说，很重要，决定了对应的PCIE设备的INTX硬件(pin) 对应CPU的哪个物理中断(line) ==> 我挂载pcie总线上的SDCHI-PCI设备就是因为用的是INTX中断，且物理中断号是0，导致中断注册失败了 */
-	  /*  00:01.0 ==> VIRTIO-NET设备 */
-	  /*  00:02.0 ==> SDHCI-PCI设备  */
+	  /*  00:01.0 ==> VIRTIO-NET设备 0x00000800 */
+	  /*  00:02.0 ==> SDHCI-PCI设备  0x00001000 */
 	  /*  下面编写BDF的信息，按 of_irq_parse_pci 这个函数中组织的方式来编写 */
 	  /*  virtio-net设备的 Bus:0  devfn:0x8  */
 	  /*  SDHCI-PCIE设备的 Bus:0  devfn:0x10 */
@@ -105,10 +105,13 @@ Total: 14097.576 ms
 	  /*  (pdev->bus->number << 16) | (pdev->devfn << 8) */
 	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x4号中断的物理中断号就是 0x36 ==>  不过 virtio-net用的是msi-x中断，就没有用INTX中断了 */
 	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x5号中断的物理中断号就是 0x37 ==>  18:  0   0   0   0   GICv3  37 Level     mmc0 */
-	  /* PCEI控制器肯定是可以同时支持INTX MSI MSIX 中断机制的，毕竟要挂各种的硬件设备，但是PCIE设备一般就只实现一种中断机制就好了      */
+	  /*  PCEI控制器肯定是可以同时支持INTX MSI MSIX 中断机制的，毕竟要挂各种的硬件设备，但是PCIE设备一般就只实现一种中断机制就好了      */
+	  /*  下面的中断映射，不能乱填哈，必须与实际的中断硬件设计连线匹配，比如 SDHCI-PCIE设备 用的是INTA引脚 ==> lspci 看 Interrupt: pin A routed to IRQ xxx  */
+	  /*                                                               所以SDHCI-PCIE设备的中断 是用的是PCIE控制器的INTA中断，QEMU中PCIE控制器的INTA中断 连接的是 36号物理中断 */
+	  /*                                                               所以SDHCI-PCIE设备的中断 对应的CPU的物理中断号也应该是36才对，下面应该填4才对(之前填的是5，导致SDHCI-PCIE设备的中断上不来)          */
 	  /* (bus<<16)|(devfn<<8)   固定为0   固定为0  PCI的中断引脚号    父节点    这是啥？(必须的，补充对齐？)  映射的物理中断类型    映射的物理中断号   映射的物理中断触发类型*/
 	        0x00000800           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x04                 0x04 																								        
-	        0x00001000           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x05                 0x04>;
+	        0x00001000           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x04                 0x04>;
 		/* ranges 表示 地址空间的映射 */
 		/*
 		   最终第一行说明的意思就是：片选0，偏移0（选中了网卡），被映射到CPU地址空间的0x10100000~0x10110000中，地址长度为0x10000。
