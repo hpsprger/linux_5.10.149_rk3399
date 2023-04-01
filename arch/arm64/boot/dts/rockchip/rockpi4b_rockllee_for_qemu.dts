@@ -101,7 +101,7 @@ Total: 14097.576 ms
 	  /*  下面编写BDF的信息，按 of_irq_parse_pci 这个函数中组织的方式来编写 */
 	  /*  virtio-net设备的 Bus:0  devfn:0x8  */
 	  /*  SDHCI-PCIE设备的 Bus:0  devfn:0x10 */
-	  /*  nterrupt-map-mask = <0x00000000 0x00 0x00 0x07>; ！！！！注意要配合掩码一起使用 */
+	  /*  nterrupt-map-mask = <0x00000000 0x00 0x00 0x07>;  ==> ！！！！注意要配合掩码一起使用 */   
 	  /*  (pdev->bus->number << 16) | (pdev->devfn << 8) */
 	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x4号中断的物理中断号就是 0x36 ==>  不过 virtio-net用的是msi-x中断，就没有用INTX中断了 */
 	  /*  SPI:0x00 ==> 基数值为32  ==>  所以SPI的0x5号中断的物理中断号就是 0x37 ==>  18:  0   0   0   0   GICv3  37 Level     mmc0 */
