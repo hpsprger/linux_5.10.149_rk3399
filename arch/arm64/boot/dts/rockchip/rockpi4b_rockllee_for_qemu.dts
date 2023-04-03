@@ -124,6 +124,8 @@ Total: 14097.576 ms
 /* int pci_swizzle_map_irq_fn(PCIDevice *pci_dev, int pin)     */
 /* 特别注意: INTX中断，PCIE设备的INTX中断 最终怎么映射连接到 PCIE控制器的哪一个INTX硬件(准备说是PCIE设备的INTX中断映射到PCIE控制器的哪一个INTX中断) */
 /* 取决于上面说的这个表，为了实现中断的负载均衡，这个是qemu中的实现，具体的单板上具体怎么映射要看具体的控制器采用什么规范，如果是物理连线的话，则取决于单板的连线了 */
+/* 中断在解析DTS得到一个物理中断号后还是扫不出设备，内核日志中一直打印cmd interrupt超时，这里的原因是 qemu 中用到的PCIE控制器会对PCIE设备的INTX中断进行 中断负载均衡，*/
+/* 发现是PCIE设备的inta中断，被PCIE控制器 负载均衡 映射到PCIE控制器的intc中断了，导致上报给CPU的是另外一个物理中断(原先中断上不来时配置的是36号中断，后来发现正确的是38号物理中断)，所以之前一直收不到中断 */
 			/* pcie控制器的 4个INTX中断 INTA# INTB# INTC# INTD#  的 映射 */
 	        0x00000000           0x00      0x00         0x01            &gic           0x00  0x00                  0x00                 0x04                 0x04 																								        
 	        0x00000000           0x00      0x00         0x02            &gic           0x00  0x00                  0x00                 0x05                 0x04 																								        
