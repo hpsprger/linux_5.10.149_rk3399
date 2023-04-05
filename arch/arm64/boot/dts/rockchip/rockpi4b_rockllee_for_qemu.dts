@@ -410,7 +410,7 @@ Total: 14097.576 ms
 		/* roclpi4b 上用的是 console=ttyS2 ==> 因为他确实有多个串口，而且用的就是第2个串口； 而qemu上只模拟了一个串口，所以需要用 ttyS0 */
 		bootargs = "root=/dev/ram0  ramdisk_size=0xC800000  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=8 rw ";
 		/* stdout-path = "/pl011@0xf6ff0000"; */
-		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */
+		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */ /* 猜测是不是存在多个串口的时候用这个参数来指定从哪一个串口输出？？？没有验证过 */
 		kaslr-seed = <0x00 0x00>; 
 	};
 };
