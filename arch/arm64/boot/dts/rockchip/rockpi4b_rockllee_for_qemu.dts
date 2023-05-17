@@ -350,9 +350,10 @@ Total: 14097.576 ms
 						cpu = <0x8003>;
 					};
 
-					core2 {
-						cpu = <0x8002>;
-					};
+/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 */
+/*					core2 {              */
+/*						cpu = <0x8002>;  */
+/*					};                   */
 
 					core3 {
 						cpu = <0x8001>;
@@ -377,13 +378,14 @@ Total: 14097.576 ms
 			device_type = "cpu";
 		};
 
-		cpu@2 {
-			phandle = <0x8002>;
-			reg = <0x02>;
-			enable-method = "psci";
-			compatible = "arm,cortex-a57";
-			device_type = "cpu";
-		};
+/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 */
+/*		cpu@2 {                            */
+/*			phandle = <0x8002>;            */
+/*			reg = <0x02>;                  */
+/*			enable-method = "psci";        */
+/*			compatible = "arm,cortex-a57"; */
+/*			device_type = "cpu";           */
+/*		};                                 */
 
 		cpu@3 {
 			phandle = <0x8001>;
