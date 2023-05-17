@@ -313,12 +313,16 @@ Total: 14097.576 ms
 		interrupts = <0x00 0x2D 0x04>;
 	};
 
+/* PSCI ==> Power State Coordination Interface  */
+/* 实现了el2 或 el3的芯片或qemu模拟系统中， 通过hvc or smc + functionid 去通知el2 el3 以及tee atf 进行配置多核协同环境的  */
+/* 很简单的一个道理， 比如实现使能了tee ree atf hypervisor的系统下  */
+/* 你开启或关闭一个CPU core就必须通知到各个子系统（tee hypervisor ree atf ）, 各个子系统为这个新核的启动或关闭做好适配工作才行 */
 	psci {
-		migrate = <0xc4000005>;
-		cpu_on = <0xc4000003>;
-		cpu_off = <0x84000002>;
-		cpu_suspend = <0xc4000001>;
-		method = "hvc";
+		migrate = <0xc4000005>; /* PSCI function id  ==> 函数 psci_cpu_on */
+		cpu_on = <0xc4000003>;  /* PSCI function id  ==> 函数 psci_cpu_on */
+		cpu_off = <0x84000002>; /* PSCI function id  ==> 函数 psci_cpu_on */
+		cpu_suspend = <0xc4000001>; /* PSCI function id  ==> 函数 psci_cpu_on */
+		method = "hvc";  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
 		compatible = "arm,psci-1.0\0arm,psci-0.2\0arm,psci";
 	};
 
@@ -360,7 +364,7 @@ Total: 14097.576 ms
 		cpu@0 {
 			phandle = <0x8004>;
 			reg = <0x00>;
-			enable-method = "psci";
+			enable-method = "psci"; /* CPU拉起的方式 */
 			compatible = "arm,cortex-a57";
 			device_type = "cpu";
 		};
