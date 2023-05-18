@@ -354,11 +354,14 @@ Total: 14097.576 ms
 						cpu = <0x8003>;
 					};
 
-/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 */
+/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 ==> 测试验证CPU的隔离机制 */
 /*					core2 {              */
 /*						cpu = <0x8002>;  */
 /*					};                   */
-
+                    /* 通过 linux psci 的 方式拉起 跑rt-thread的核2，这时不能隔离掉核2，隔离了PSCI流程就不会过来拉核2了 */
+					core2 {              
+						cpu = <0x8002>;  
+					};
 					core3 {
 						cpu = <0x8001>;
 					};
@@ -382,7 +385,7 @@ Total: 14097.576 ms
 			device_type = "cpu";
 		};
 
-/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 */
+/* 准备将cpu2隔离起来，用来跑rt-thread  ==> info threads 里面可以看到 CPU#2被隔离了，是不会被内核拉起的运行的 ==> 测试验证CPU的隔离机制 */
 /*		cpu@2 {                            */
 /*			phandle = <0x8002>;            */
 /*			reg = <0x02>;                  */
@@ -391,6 +394,14 @@ Total: 14097.576 ms
 /*			device_type = "cpu";           */
 /*		};                                 */
 
+        /* 通过 linux psci 的 方式拉起 跑rt-thread的核2，这时不能隔离掉核2，隔离了PSCI流程就不会过来拉核2了 */
+		cpu@2 {
+			phandle = <0x8002>;
+			reg = <0x02>;
+			enable-method = "psci";
+			compatible = "arm,cortex-a57";
+			device_type = "cpu";
+		};
 		cpu@3 {
 			phandle = <0x8001>;
 			reg = <0x03>;
