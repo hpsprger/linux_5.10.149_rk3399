@@ -39,7 +39,11 @@ Total: 14097.576 ms
 		/*	  149c0000-14f2ffff : reserved        */
 		/*	  14f30000-1529ffff : Kernel data     */
 		/*			device_type = "memory";       */
-		reg = <0x00 0x200000 0x00 0x7FE00000>;    /* kernnel memblock等模块 就是从这个地方拿到可以管理的物理内存的起始地址与大小的 */
+		/* reg = <0x00 0x200000 0x00 0x7FE00000>; */   /* kernnel memblock等模块 就是从这个地方拿到可以管理的物理内存的起始地址与大小的 */
+
+		/*   划出高端的200M(0xC800000)内存来给rt-thread使用, rt-thread的内存起始地址0x73000000，长度 200M 【前后留了点隔离带空间】 */
+		reg = <0x00 0x200000 0x00 0x70000000>;
+
 		device_type = "memory";
 	};
 
