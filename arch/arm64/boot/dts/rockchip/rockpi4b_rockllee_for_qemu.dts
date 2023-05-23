@@ -430,9 +430,9 @@ Total: 14097.576 ms
 		/* 下面两个参数是必须的 ==> 15-文件系统挂载过程【ramdisk等】.emmx ==> early_init_dt_check_for_initrd 内核会扫描DTB获取这两个参数后，内核才知道initrd的起始与结束位置的，否则内核会加载ramdisk失败 ，之前不用加是因为uboot自动帮我们加好了，现在把uboot的调整去掉了，所以就要自己加上了，内核才能正常加载initrd */
 		/* 所以只要有下面的参数，其实通过 booti  0x13800000   -  0x12E00000 这个命令行也能正常启动内核与加载文件系统，正常运行的 */
 		/* 事实证明:内核挂载的时候，内核加载 ramdisk 时，内核是通过ramdisk 镜像的实际大小来知道ramdisk的大小的，不通过 bootargs 的   ramdisk_size 这个参数来设置的 */
-		linux,initrd-end = <0x3C200000>;
-		linux,initrd-start = <0x2c800000>;
-		/* bootargs = "root=/dev/ram0  ramdisk_size=14745600  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw "; */
+		linux,initrd-end = <0x67DFFFFF>;
+		linux,initrd-start = <0x42600000>;
+		/* bootargs = "root=/dev/ram0  ramdisk_size=0  nokaslr  console=ttyAMA0 earlycon=pl011,0xf6ff0000 loglevel=8 rw "; */
 		/* roclpi4b 上用的是 console=ttyS2 ==> 因为他确实有多个串口，而且用的就是第2个串口； 而qemu上只模拟了一个串口，所以需要用 ttyS0 */
 		/* 内核加载 ramdisk 时，内核是通过ramdisk 镜像的实际大小来知道ramdisk的大小的，不通过 bootargs 的   ramdisk_size 这个参数来设置的, 所以下面的 ramdisk_size设置为任意值都没有关系 */
 		bootargs = "root=/dev/ram0  ramdisk_size=0xC800000  nokaslr earlycon=pl011,0xf6ff0000  console=ttyS0,1500000n8 loglevel=8 rw ";
