@@ -27,7 +27,7 @@ Total: 14097.576 ms
 	
 	/* uboot重新修改或创建了/memory node，uboot 会根据内存的尺寸来填充内容 ==> fdt_fixup_memory_banks ==> 8.96: uboot中修改dtb内容 */
 	/* 为了方便调试，将uboot中的调整屏蔽掉，直接用dtb这里来控制 */
-	memory@5EA00000 {
+	memory@3FC00000  {
 		/* reg = <0x00 0x5EA00000 0x00 0x40000000>; */  /* booti  0x13800000【kernel】    0x2c800000:0x1f400000【ramdisk】     0x12E00000【dtb】 */
 		/* reg = <0x00 0x200000 0x00 0x7FE00000>;   */  /* qemu中实现的系统内存空间是 0x0--0x80000000,所以注意这里不要超过范围了，物理地址不能超过 0x80000000，否则有可能内核初始化就崩溃了，分配到的物理地址CPU不能访问的 */
 		/* reg = <0x00 0x4BD00000 0x00 0x34300000>;  ==> 【没有覆盖 ramdisk img】报错 initrd not fully accessible via the linear mapping -- please check your bootloader */
@@ -44,6 +44,10 @@ Total: 14097.576 ms
 
 		/*   划出高端的200M(0xC800000)内存来给rt-thread使用, rt-thread的内存起始地址0x73000000，长度 200M 【前后留了点隔离带空间】 */
 		reg = <0x0   0x3FC00000      0x00 0x40400000>;
+		device_type = "memory";
+	};
+
+	memory@20000000000  {
 		reg = <0x200 0x00000000      0x00 0x80000000>;
 		device_type = "memory";
 	};
