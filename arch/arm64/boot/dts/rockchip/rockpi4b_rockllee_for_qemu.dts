@@ -43,8 +43,8 @@ Total: 14097.576 ms
 		/* reg = <0x00 0x200000 0x00 0x7FE00000>; */   /* kernnel memblock等模块 就是从这个地方拿到可以管理的物理内存的起始地址与大小的 */
 
 		/*   划出高端的200M(0xC800000)内存来给rt-thread使用, rt-thread的内存起始地址0x73000000，长度 200M 【前后留了点隔离带空间】 */
-		reg = <0x00 0x200000 0x00 0x70000000>;
-
+		reg = <0x0   0x3FC00000      0x00 0x40400000>;
+		reg = <0x200 0x00000000      0x00 0x80000000>;
 		device_type = "memory";
 	};
 
@@ -323,10 +323,10 @@ Total: 14097.576 ms
 /* 很简单的一个道理， 比如实现使能了tee ree atf hypervisor的系统下  */
 /* 你开启或关闭一个CPU core就必须通知到各个子系统（tee hypervisor ree atf ）, 各个子系统为这个新核的启动或关闭做好适配工作才行 */
 	psci {
-		migrate = <0xc4000005>; /* PSCI function id  ==> 函数 psci_cpu_on */
-		cpu_on = <0xc4000003>;  /* PSCI function id  ==> 函数 psci_cpu_on */
-		cpu_off = <0x84000002>; /* PSCI function id  ==> 函数 psci_cpu_on */
-		cpu_suspend = <0xc4000001>; /* PSCI function id  ==> 函数 psci_cpu_on */
+		migrate = <0xc4000005>; /* PSCI function id  ==> 函数 psci_migrate */
+		cpu_on = <0xc4000003>;  /* PSCI function id  ==> 函数 psci_cpu_on  */
+		cpu_off = <0x84000002>; /* PSCI function id  ==> 函数 psci_cpu_off */
+		cpu_suspend = <0xc4000001>; /* PSCI function id  ==> 函数 psci_cpu_suspend */
 		method = "hvc";  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
 		compatible = "arm,psci-1.0\0arm,psci-0.2\0arm,psci";
 	};
