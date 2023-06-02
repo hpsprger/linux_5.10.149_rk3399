@@ -269,6 +269,27 @@ Total: 14097.576 ms
 		#address-cells = <0x02>;
 		interrupt-controller;
 		#interrupt-cells = <0x03>;
+		/* ==> ａ第一个值表示中断类型，0为spi，1为ppi，2为扩展spi，3为扩展ppi */
+　　	/* ==> ｂ指定中断号，其中spi类型中断为硬件中断号 – 32，ppi类型中断为硬件中断号 -16，扩展spi为中断号 – xxx，扩展ppi为中断号 –xxx */
+　　	/* ==> ｃ中断flag，其中bit 0 – bit 3为中断触发类型。*/
+　　	/* ==> 　Gicv2定义如下： */
+　　	/* ==> 　1：上升沿触发，2：下降沿触发 */
+　　	/* ==> 　4：高电平触发， 8：低电平触发 */
+		/* ==>  */
+　　	/* ==> 　Gicv3定义如下：*/
+　　	/* ==> 　1：边沿触发 */
+　　	/* ==> 　4：电平触发 */
+　　	/* 0 – 15 ==> SGI   */
+　　	/* 16 – 31 ==> PPI  */
+　　	/* 32 – 1019 ==> SPI */
+　　	/* 1020 – 1023 ==> Special interrupt number */
+　　	/* 1024 – 1055 ==> Reserved */
+　　	/* 1056 – 1119 ==> PPI */
+　　	/* 1120 – 4095 ==> Reserved */
+　　	/* 4096 – 5119 ==> SPI Extended SPI. */
+　　	/* 5120 – 8191 ==> Reserved */
+　　	/* 8192 – IMPLEMENTATION DEFINED  ==> LPI */
+		interrupts = <0x01 9 0x4>; /* 16 – 31 PPI ==> ARM强烈建议用25号中断做 Maintenance Interrupt ==> GIC 通过维护中断通知hypervisor做一个操作 */
 		/* 参考 ==> 12-PCIE---INTX---MSI---MSI-X机制研究.emmx */
 		/* ITS的基地址就是下面reg属性中的 0xfee20000 ， devmem2 是一个可以读任意物理地址的工具 */
 		/* 在gic的节点中，有一个its子节点 */
