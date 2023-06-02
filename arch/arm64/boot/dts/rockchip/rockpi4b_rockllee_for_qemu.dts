@@ -350,7 +350,8 @@ Total: 14097.576 ms
 		cpu_on = <0xc4000003>;  /* PSCI function id  ==> 函数 psci_cpu_on  */
 		cpu_off = <0x84000002>; /* PSCI function id  ==> 函数 psci_cpu_off */
 		cpu_suspend = <0xc4000001>; /* PSCI function id  ==> 函数 psci_cpu_suspend */
-		method = "hvc";  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
+		/* method = "hvc"; ==> 没有跑XEN的环境下，用hvc，qemu在执行hvc的时候，会对hvc指令做相应的软件模拟 */  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
+		method = "smc"; /* 在跑XEN的环境下，PSCI的方法要改为SMC，XEN才不会报错 */
 		compatible = "arm,psci-1.0\0arm,psci-0.2\0arm,psci";
 	};
 
