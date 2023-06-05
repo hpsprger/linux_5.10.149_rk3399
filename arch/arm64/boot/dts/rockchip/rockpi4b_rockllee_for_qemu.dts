@@ -477,7 +477,7 @@ Total: 14097.576 ms
 			compatible = "xen,domain";
 			#address-cells = <0x2>;
 			#size-cells = <0x1>;
-			memory = <0 131072>;
+			memory = <0 2097152>; /* 2G */
 			cpus = <1>;
 			vpl011;
 			module@0x35E00000 {
