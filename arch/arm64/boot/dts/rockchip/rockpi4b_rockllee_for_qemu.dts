@@ -489,9 +489,9 @@ Total: 14097.576 ms
 				compatible = "multiboot,ramdisk", "multiboot,module";
 				reg = <0x0 0x42600000 0xfa00000>;
 			};
-			module@0x34A00000 {
+			module@34F00000 {
 				compatible = "multiboot,device-tree", "multiboot,module";
-				reg = <0x0 0x34A00000 0xffffff>;
+				reg = <0x0 0x34F00000 0x80e>;
 			};
 		};
 	};
