@@ -66,6 +66,9 @@ Total: 14097.576 ms
 */
 
 /* virtio,mmio 其实是挂在pcie总线上的一个pcie设备  ==> virtio device  ==> 没有这个节点 网卡也是能正常工作了，所以与这个节点无关 */
+/* 为什么没有下面这段，virtio-net网卡也能正常工作？ 因为 virtio-net网卡，是这么指定创建的 -device virtio-net-pci,netdev=hostnet1,id=net1 */
+/* -device virtio-net-pci,netdev=hostnet1,id=net1 ==> qemu会自动创建一个 virtio,mmio后端设备，并将这个后端设备的 VIRTIO_ID_NET, VIRTIO_DEV_ANY_ID 填好，kernel 中的 通过 整套机制就能用这个virtio,mmio设备了 */
+/*  参考  12-【PCIE设备】【virtio,mmio设备与virtio,mmio驱动工作过程】【虚拟网卡virtio-net】网口驱动模型分析【platform总线模型--pci 总线模型--virtio_bus模型【virtio_net】【very good】.emmx */
 /*	virtio_mmio@ffc10000 {                                                   */
 /*		dma-coherent;                                                        */
 /*		interrupts = <0x00 0x3 0x01>;                                        */
