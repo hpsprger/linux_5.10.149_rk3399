@@ -353,8 +353,8 @@ Total: 14097.576 ms
 		cpu_on = <0xc4000003>;  /* PSCI function id  ==> 函数 psci_cpu_on  */
 		cpu_off = <0x84000002>; /* PSCI function id  ==> 函数 psci_cpu_off */
 		cpu_suspend = <0xc4000001>; /* PSCI function id  ==> 函数 psci_cpu_suspend */
-		/* method = "hvc"; ==> 没有跑XEN的环境下，用hvc，qemu在执行hvc的时候，会对hvc指令做相应的软件模拟 */  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
-		method = "smc"; /* 在跑XEN的环境下，PSCI的方法要改为SMC，XEN才不会报错 */
+		method = "hvc"; /* ==> 没有跑XEN的环境下，用hvc，qemu在执行hvc的时候，会对hvc指令做相应的软件模拟 */  /* EL1 PSCI 的系统调用的方式，可以选择HVC 或 SMC ==> __arm_smccc_hvc or __arm_smccc_smc ==> 根据SOC的实现定义 目前qemu中可以实现这两张模式的仿真 */
+		/* method = "smc"; */ /* 在跑XEN的环境下，PSCI的方法要改为SMC，XEN才不会报错 */
 		compatible = "arm,psci-1.0\0arm,psci-0.2\0arm,psci";
 	};
 
@@ -462,6 +462,9 @@ Total: 14097.576 ms
 		/* stdout-path = "/pl011@0xf6ff0000"; */
 		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */ /* 猜测是不是存在多个串口的时候用这个参数来指定从哪一个串口输出？？？没有验证过 */
 		kaslr-seed = <0x00 0x00>;
+
+	/* xen时用到下面的节点信息 */
+	/*
 		dom0 {
 			xen,xen-bootargs = "dom0_mem=1024M  console=dtuart  dtuart=/serial@ff1a0000  dom0_vcpus_pin  hmp-unsafe=true  dom0_max_vcpus=1  bootscrub=0  loglvl=all";
 			bootargs = "rw root=/dev/ram rdinit=/sbin/init earlyprintk=serial,ttyAMA0  console=hvc0 earlycon=xenboot";
@@ -497,5 +500,6 @@ Total: 14097.576 ms
 				reg = <0x0 0x34F00000 0x80e>;
 			};
 		};
+	*/ 
 	};
 };
