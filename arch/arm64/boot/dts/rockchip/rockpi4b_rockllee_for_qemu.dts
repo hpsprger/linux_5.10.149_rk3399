@@ -431,7 +431,7 @@ Total: 14097.576 ms
 /*			enable-method = "psci";         */
 /*			compatible = "arm,cortex-a57";  */
 /*			device_type = "cpu";            */
-		};
+/*		};                                  */
 		cpu@3 {
 			phandle = <0x8001>;
 			reg = <0x03>;
