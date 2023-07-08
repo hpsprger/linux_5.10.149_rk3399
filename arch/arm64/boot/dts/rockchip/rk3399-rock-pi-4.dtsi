@@ -12,7 +12,7 @@
 
 / {
 	chosen {
-		stdout-path = "serial2:1500000n8";
+		stdout-path = "serial2:115200n8";
 	};
 
 	clkin_gmac: external-gmac-clock {
