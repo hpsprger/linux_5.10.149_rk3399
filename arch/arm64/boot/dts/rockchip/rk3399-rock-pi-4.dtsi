@@ -162,7 +162,7 @@
 	assigned-clock-parents = <&clkin_gmac>;
 	clock_in_out = "input";
 	phy-supply = <&vcc_lan>;
-	phy-mode = "rgmii";
+	phy-mode = "rmii";
 	pinctrl-names = "default";
 	pinctrl-0 = <&rgmii_pins>;
 	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
