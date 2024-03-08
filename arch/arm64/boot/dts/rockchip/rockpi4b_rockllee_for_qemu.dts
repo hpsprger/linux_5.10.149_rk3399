@@ -462,5 +462,42 @@ Total: 14097.576 ms
 		/* stdout-path = "/pl011@0xf6ff0000"; */
 		/* stdout-path = "uart2:1500000n8"; */ /* 屏蔽了这句话后串口还是正常的，目前看 */ /* 猜测是不是存在多个串口的时候用这个参数来指定从哪一个串口输出？？？没有验证过 */
 		kaslr-seed = <0x00 0x00>;
+
+		/* xen时用到下面的节点信息 */
+		dom0 {
+			xen,xen-bootargs = "dom0_mem=1024M  console=dtuart  dtuart=/serial@ff1a0000  dom0_vcpus_pin  hmp-unsafe=true  dom0_max_vcpus=1  bootscrub=0  loglvl=all";
+			bootargs = "rw root=/dev/ram rdinit=/sbin/init earlyprintk=serial,ttyAMA0  console=hvc0 earlycon=xenboot";
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
+			module@0x35E00000 {
+				compatible = "multiboot,kernel", "multiboot,module";
+				reg = <0x0 0x35E00000  0x1a5b808>;
+			};
+			module@0x42600000 {
+				compatible = "multiboot,ramdisk", "multiboot,module";
+				reg = <0x0 0x42600000  0xfa00000>;
+			};
+		};
+		domU1 {
+			compatible = "xen,domain";
+			#address-cells = <0x2>;
+			#size-cells = <0x1>;
+			memory = <0 1048576>; /* 1G */
+			cpus = <1>;
+			vpl011;
+			module@0x35E00000 {
+				compatible = "multiboot,kernel", "multiboot,module";
+				reg = <0x0 0x35E00000 0x1a5b808>;
+				bootargs = "console=ttyAMA0 init=/bin/sh";
+			};
+			module@0x42600000 {
+				compatible = "multiboot,ramdisk", "multiboot,module";
+				reg = <0x0 0x42600000 0xfa00000>;
+			};
+			module@34F00000 {
+				compatible = "multiboot,device-tree", "multiboot,module";
+				reg = <0x0 0x34F00000 0x80e>;
+			};
+		};
 	};
 };
