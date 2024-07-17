@@ -386,6 +386,7 @@ static void __init get_fs_names(char *page)
 	*s = '\0';
 }
 
+/*  do_mount_root(name="/dev/root", fs="ext4", flags=32768, data=0x0)  */
 static int __init do_mount_root(const char *name, const char *fs,
 				 const int flags, const void *data)
 {
@@ -403,7 +404,7 @@ static int __init do_mount_root(const char *name, const char *fs,
 		/* zero-pad. init_mount() will make sure it's terminated */
 		strncpy(data_page, data, PAGE_SIZE);
 	}
-
+	/* init_mount("/dev/root", "/root", "ext4", 32768, data_page) */
 	ret = init_mount(name, "/root", fs, flags, data_page);
 	if (ret)
 		goto out;
@@ -423,19 +424,21 @@ out:
 	return ret;
 }
 
+/* rockllee: mount_block_root("/dev/root", root_mountflags); */
 void __init mount_block_root(char *name, int flags)
 {
-	struct page *page = alloc_page(GFP_KERNEL);
-	char *fs_names = page_address(page);
+	struct page *page = alloc_page(GFP_KERNEL); /* 分配一个page，也就是申请一块物理内存，用来给下面使用 */
+	char *fs_names = page_address(page);        /* fs_names 指向这块内存的起始地址 */
 	char *p;
 	char b[BDEVNAME_SIZE];
 
 	scnprintf(b, BDEVNAME_SIZE, "unknown-block(%u,%u)",
 		  MAJOR(ROOT_DEV), MINOR(ROOT_DEV));
-	get_fs_names(fs_names);
+	get_fs_names(fs_names); /* fs_names 里面存放所有的文件系统的类型名：ext3 ext2 ext4 ... */
 retry:
-	for (p = fs_names; *p; p += strlen(p)+1) {
-		int err = do_mount_root(name, p, flags, root_mount_data);
+	for (p = fs_names; *p; p += strlen(p)+1) { /* 逐个文件系统进行遍历使用，我这里会最终用到ext4 */
+	    /*  do_mount_root(name="/dev/root", fs="ext4", flags=32768, data=0x0) */
+		int err = do_mount_root(name, p, flags, root_mount_data); 
 		switch (err) {
 			case 0:
 				goto out;
@@ -612,6 +615,10 @@ void __init prepare_namespace(void)
 			root_device_name += 5;
 	}
 
+	/* 
+		rockllee: initrd_load 把 initrd (我做的ramdisk) 拷贝到了 /initrd.image，
+		          并把 /initrd.image填充到/dev/ram0 这个块设备节点来了  
+	*/
 	if (initrd_load())
 		goto out;
 
@@ -625,6 +632,11 @@ void __init prepare_namespace(void)
 		async_synchronize_full();
 	}
 
+	/*
+		将 ROOT_DEV 设备上的真实文件系统mount到rootfs的/root目录中
+		根据ROOT_DEV设备号挂接到/dev/root设备或者网络文件系统 
+		将/dev/ram0设备中的跟文件系统挂载到/root目录，进入该目录并将/root设置为当前目录
+	*/
 	mount_root();
 out:
 	devtmpfs_mount();

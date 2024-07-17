@@ -124,13 +124,17 @@ static void __init handle_initrd(void)
 bool __init initrd_load(void)
 {
 	if (mount_initrd) {
-		create_dev("/dev/ram", Root_RAM0);
+		/* rockllee: 创建 /dev/ram0 ==> Root_RAM0 = MKDEV(RAMDISK_MAJOR, 0) */
+		create_dev("/dev/ram", Root_RAM0); 
+
 		/*
 		 * Load the initrd data into /dev/ram0. Execute it as initrd
 		 * unless /dev/ram0 is supposed to be our actual root device,
 		 * in that case the ram disk is just set up here, and gets
 		 * mounted in the normal path.
 		 */
+		/* rockllee: 看上面的注释 ==> Load the initrd data into /dev/ram0 */
+		/* rockllee: 把 /initrd.image 文件里面的数据 拷贝到 /dev/ram0   */
 		if (rd_load_image("/initrd.image") && ROOT_DEV != Root_RAM0) {
 			init_unlink("/initrd.image");
 			handle_initrd();

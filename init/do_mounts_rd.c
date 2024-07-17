@@ -183,6 +183,7 @@ static unsigned long nr_blocks(struct file *file)
 	return i_size_read(inode) >> 10;
 }
 
+/* rockllee: rd_load_image 把 /initrd.image（in_file）文件里面的数据 拷贝到 /dev/ram0（out_file）   */
 int __init rd_load_image(char *from)
 {
 	int res = 0;

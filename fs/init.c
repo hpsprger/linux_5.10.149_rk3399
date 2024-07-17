@@ -13,15 +13,27 @@
 #include <linux/security.h>
 #include "internal.h"
 
+/*  init_mount("/dev/root", "/root", "ext4", 32768, data_page)  */
 int __init init_mount(const char *dev_name, const char *dir_name,
 		const char *type_page, unsigned long flags, void *data_page)
 {
 	struct path path;
 	int ret;
 
+	/* dir_name ==> /root */
+	/* kern_path ("/root", 1, path=0xffffffc011aebcb8) */
 	ret = kern_path(dir_name, LOOKUP_FOLLOW, &path);
 	if (ret)
 		return ret;
+
+	/* dev_name ==> /dev/root */
+	/*  如果 kern_path 成功，则调用 path_mount 函数（注意：这不是Linux内核标准API的一部分，可能是自定义的或特定于某个项目的）来执行挂载操作。
+	    这个函数将使用 dev_name、&path（挂载点）、type_page（文件系统类型）、flags（挂载标志）和  data_page（文件系统特定数据）
+		作为参数来尝试挂载文件系统
+	*/
+	/* path_mount ("/dev/root", path=0xffffffc011aebcb8, "ext4", flags=32768, data_page=0x0) */
+	/* /dev/root 待挂载的设备节点，这个块设备节点 */
+	/* path 这个是挂载点  */
 	ret = path_mount(dev_name, &path, type_page, flags, data_page);
 	path_put(&path);
 	return ret;
