@@ -1678,6 +1678,7 @@ static int __init proc_genhd_init(void)
 module_init(proc_genhd_init);
 #endif /* CONFIG_PROC_FS */
 
+/* blk_lookup_devt(name="ram0", partno=0) */
 dev_t blk_lookup_devt(const char *name, int partno)
 {
 	dev_t devt = MKDEV(0, 0);
@@ -1689,6 +1690,7 @@ dev_t blk_lookup_devt(const char *name, int partno)
 		struct gendisk *disk = dev_to_disk(dev);
 		struct hd_struct *part;
 
+		/* "ram0" */
 		if (strcmp(dev_name(dev), name))
 			continue;
 
@@ -1696,6 +1698,7 @@ dev_t blk_lookup_devt(const char *name, int partno)
 			/* We need to return the right devno, even
 			 * if the partition doesn't exist yet.
 			 */
+			/* 最后返回的是 devt = 0x100000 */
 			devt = MKDEV(MAJOR(dev->devt),
 				     MINOR(dev->devt) + partno);
 			break;

@@ -150,6 +150,7 @@ int __init init_stat(const char *filename, struct kstat *stat, int flags)
 	return error;
 }
 
+/* init_mknod (filename="/dev/root", mode=24960, dev=256) */
 int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
 {
 	struct dentry *dentry;

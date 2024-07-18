@@ -218,7 +218,7 @@ static int match_dev_by_label(struct device *dev, const void *data)
  *	name contains slashes, the device name has them replaced with
  *	bangs.
  */
-
+/* name_to_dev_t("/dev/ram0") */
 dev_t name_to_dev_t(const char *name)
 {
 	char s[32];
@@ -246,7 +246,7 @@ dev_t name_to_dev_t(const char *name)
 		goto done;
 	}
 #endif
-
+	/* name ==> /dev/ram0 */
 	if (strncmp(name, "/dev/", 5) != 0) {
 		unsigned maj, min, offset;
 		char dummy;
@@ -263,7 +263,7 @@ dev_t name_to_dev_t(const char *name)
 		}
 		goto done;
 	}
-
+	/* name += 5 ==> ram0 */
 	name += 5;
 	res = Root_NFS;
 	if (strcmp(name, "nfs") == 0)
@@ -271,6 +271,8 @@ dev_t name_to_dev_t(const char *name)
 	res = Root_CIFS;
 	if (strcmp(name, "cifs") == 0)
 		goto done;
+	
+	/* 走到这里来 ==> 但不会走这里的 goto done */
 	res = Root_RAM0;
 	if (strcmp(name, "ram") == 0)
 		goto done;
@@ -281,8 +283,11 @@ dev_t name_to_dev_t(const char *name)
 	for (p = s; *p; p++)
 		if (*p == '/')
 			*p = '!';
+	/* s ==> ram0 */
 	res = blk_lookup_devt(s, 0);
+	/* res ==> 0x100000 */
 	if (res)
+		/* 走这里返回 */
 		goto done;
 
 	/*
@@ -410,14 +415,20 @@ static int __init do_mount_root(const char *name, const char *fs,
 		挂载点为/root, /root 为 root用户的home目录，
 		并且调用init_chdir( "/root" )将工作目录切换到/root目录下 
 	*/
+	/* init_mount (name="/dev/root", fs="ext4", flags=32768, data=0x0) */
 	ret = init_mount(name, "/root", fs, flags, data_page);
 	if (ret)
 		goto out;
 	
 	/* 调用init_chdir( "/root" )将工作目录切换到/root目录下  */
 	init_chdir("/root");
+	
+	/* 上面将 /dev/root 挂载到了 /root上，且把当前路径也切到到了/root */
+	/*  current->fs->pwd.dentry->d_sb ==> 所以这里就是 /dev/root 文件系统的超级块了 */
 	s = current->fs->pwd.dentry->d_sb;
 	ROOT_DEV = s->s_dev;
+
+	/* [   79.810099] VFS: Mounted root (ext4 filesystem) on device 1:0. */
 	printk(KERN_INFO
 	       "VFS: Mounted root (%s filesystem)%s on device %u:%u.\n",
 	       s->s_type->name,
@@ -430,7 +441,7 @@ out:
 	return ret;
 }
 
-/* rockllee: mount_block_root("/dev/root", root_mountflags); */
+/* mount_block_root (name="/dev/root", flags=0x8000) */
 void __init mount_block_root(char *name, int flags)
 {
 	struct page *page = alloc_page(GFP_KERNEL); /* 分配一个page，也就是申请一块物理内存，用来给下面使用 */
@@ -579,12 +590,21 @@ void __init mount_root(void)
 		return;
 	}
 #endif
-#ifdef CONFIG_BLOCK
+#ifdef CONFIG_BLOCK /* initrd.image ramdisk镜像走这里 */
 	{
 		/* 
 		   创建ROOT_DEV对应的设备节点/dev/root,
 		   如果没有指定rootfstype 命令行参数就尝试遍历文件系统类型对 /dev/root进行挂载，
 		   挂载点为/root,并且调用init_chdir( "/root" )将工作目录切换到 /root目录下 
+		*/
+		/* ROOT_DEV ==> 0x100000 */
+		/* 创建设备节点 /dev/root */
+		/* 
+			https://blog.csdn.net/jinking01/article/details/104666762
+			该方法中先调用create_dev方法，使/dev/root目录指向ROOT_DEV代表的设备
+			【create_dev函数的作用原来如此，之前认为只是创建了一个设备节点，原来这里实现了指向的这个效果了】，
+			访问/dev/root目录等价于访问ROOT_DEV代表的设备的内容。
+			此时，/dev/root目录就等价于硬盘分区/dev/nvme0n1p2里的根目录。 
 		*/
 		int err = create_dev("/dev/root", ROOT_DEV);
 
@@ -593,7 +613,7 @@ void __init mount_root(void)
 		
 		/* 将块设备节点 /dev/root 挂载到 /root ==> /root 是 root用户的home目录 */
 		/* ~ 是用户的主目录,root用户的主目录是/root，普通用户的主目录是“/home/普通用户名” */
-		/*  mount_block_root (name="/dev/root", flags=32768)  */
+		/*  mount_block_root (name="/dev/root", flags=0x8000)  */
 		mount_block_root("/dev/root", root_mountflags);
 	}
 #endif
@@ -621,15 +641,20 @@ void __init prepare_namespace(void)
 
 	md_run_setup();
 
+	/* saved_root_name ==> "/dev/ram0" */
 	if (saved_root_name[0]) {
+		/* root_device_name ==> "/dev/ram0" */
 		root_device_name = saved_root_name;
 		if (!strncmp(root_device_name, "mtd", 3) ||
 		    !strncmp(root_device_name, "ubi", 3)) {
 			mount_block_root(root_device_name, root_mountflags);
 			goto out;
 		}
+		/* root_device_name ==> "/dev/ram0" */
+		/* ROOT_DEV = 0x100000 */
 		ROOT_DEV = name_to_dev_t(root_device_name);
 		if (strncmp(root_device_name, "/dev/", 5) == 0)
+		    /* root_device_name ==> "ram0" */
 			root_device_name += 5;
 	}
 
@@ -637,6 +662,7 @@ void __init prepare_namespace(void)
 		initrd_load 把 initrd (我做的ramdisk) 拷贝到了 /initrd.image，
 		并把 /initrd.image填充到/dev/ram0 这个块设备节点来了  
 	*/
+	/* initrd_load 对应的打印是: 启动过程 [   47.034191] | ... [   73.289383] done. */
 	if (initrd_load())
 		goto out;
 
@@ -654,14 +680,23 @@ void __init prepare_namespace(void)
 		尝试遍历文件系统类型对/dev/root进行挂载，挂载点为/root, /root 为 root用户的home目录，
 		mount_root里面挂载的过程中会调用init_chdir( "/root" )将工作目录切换到/root目录下 
 	*/
+	/*
+	    prepare_namespace方法里调用mount_root方法，来挂载真正的根目录文件系统，也就是cmdline里面 root=xxx 的 xxx这个设备节点
+
+		mount_root() 会打印下面的信息: 
+		[   80.738952] EXT4-fs (ram0): recovery complete
+		[   80.752144] EXT4-fs (ram0): mounted filesystem with ordered data mode. Opts: (null)
+		[   80.766151] VFS: Mounted root (ext4 filesystem) on device 1:0.
+	*/
 	mount_root();
 out:
 	devtmpfs_mount();
 	/* MS_MOVE通常用于将挂载点从一个位置移动到另一个位置 */
-	/* mount_root里面挂载的过程中会调用init_chdir( "/root" )将工作目录切换到/root目录下 */
-	/* init_mount 这里将当前工作目录(/root)移动挂载至/目录下 */
+	/* mount_root函数里面会调用init_chdir( "/root" ) ==> 将工作目录切换到/root 目录下 ==> /root 变为当前的工作目录 */
+	/* init_mount 这里将当前工作目录(/root) 移动挂载至/目录下 */
+	/* 将当前目录挂载的文件系统移动到根目录 */
 	init_mount(".", "/", NULL, MS_MOVE, NULL);
-	/* 切换当前进程的根目录至当前目录 /root */
+	/* 切换当前进程的根目录至当前目录 /root ==> /root 就变为了当前的根目录，在这之前 / 还是 rootfs */
 	init_chroot(".");
 }
 

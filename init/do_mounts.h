@@ -14,6 +14,7 @@ void  mount_block_root(char *name, int flags);
 void  mount_root(void);
 extern int root_mountflags;
 
+/* create_dev (name="/dev/root", dev=0x100000) */
 static inline __init int create_dev(char *name, dev_t dev)
 {
 	init_unlink(name);
