@@ -405,10 +405,16 @@ static int __init do_mount_root(const char *name, const char *fs,
 		strncpy(data_page, data, PAGE_SIZE);
 	}
 	/* init_mount("/dev/root", "/root", "ext4", 32768, data_page) */
+	/* 
+		尝试遍历文件系统类型对 /dev/root进行挂载，
+		挂载点为/root, /root 为 root用户的home目录，
+		并且调用init_chdir( "/root" )将工作目录切换到/root目录下 
+	*/
 	ret = init_mount(name, "/root", fs, flags, data_page);
 	if (ret)
 		goto out;
-
+	
+	/* 调用init_chdir( "/root" )将工作目录切换到/root目录下  */
 	init_chdir("/root");
 	s = current->fs->pwd.dentry->d_sb;
 	ROOT_DEV = s->s_dev;
@@ -436,6 +442,9 @@ void __init mount_block_root(char *name, int flags)
 		  MAJOR(ROOT_DEV), MINOR(ROOT_DEV));
 	get_fs_names(fs_names); /* fs_names 里面存放所有的文件系统的类型名：ext3 ext2 ext4 ... */
 retry:
+		/* 
+		   尝试遍历文件系统类型对 /dev/root进行挂载，
+		*/
 	for (p = fs_names; *p; p += strlen(p)+1) { /* 逐个文件系统进行遍历使用，我这里会最终用到ext4 */
 	    /*  do_mount_root(name="/dev/root", fs="ext4", flags=32768, data=0x0) */
 		int err = do_mount_root(name, p, flags, root_mount_data); 
@@ -572,10 +581,19 @@ void __init mount_root(void)
 #endif
 #ifdef CONFIG_BLOCK
 	{
+		/* 
+		   创建ROOT_DEV对应的设备节点/dev/root,
+		   如果没有指定rootfstype 命令行参数就尝试遍历文件系统类型对 /dev/root进行挂载，
+		   挂载点为/root,并且调用init_chdir( "/root" )将工作目录切换到 /root目录下 
+		*/
 		int err = create_dev("/dev/root", ROOT_DEV);
 
 		if (err < 0)
 			pr_emerg("Failed to create /dev/root: %d\n", err);
+		
+		/* 将块设备节点 /dev/root 挂载到 /root ==> /root 是 root用户的home目录 */
+		/* ~ 是用户的主目录,root用户的主目录是/root，普通用户的主目录是“/home/普通用户名” */
+		/*  mount_block_root (name="/dev/root", flags=32768)  */
 		mount_block_root("/dev/root", root_mountflags);
 	}
 #endif
@@ -616,8 +634,8 @@ void __init prepare_namespace(void)
 	}
 
 	/* 
-		rockllee: initrd_load 把 initrd (我做的ramdisk) 拷贝到了 /initrd.image，
-		          并把 /initrd.image填充到/dev/ram0 这个块设备节点来了  
+		initrd_load 把 initrd (我做的ramdisk) 拷贝到了 /initrd.image，
+		并把 /initrd.image填充到/dev/ram0 这个块设备节点来了  
 	*/
 	if (initrd_load())
 		goto out;
@@ -632,15 +650,18 @@ void __init prepare_namespace(void)
 		async_synchronize_full();
 	}
 
-	/*
-		将 ROOT_DEV 设备上的真实文件系统mount到rootfs的/root目录中
-		根据ROOT_DEV设备号挂接到/dev/root设备或者网络文件系统 
-		将/dev/ram0设备中的跟文件系统挂载到/root目录，进入该目录并将/root设置为当前目录
+	/* 
+		尝试遍历文件系统类型对/dev/root进行挂载，挂载点为/root, /root 为 root用户的home目录，
+		mount_root里面挂载的过程中会调用init_chdir( "/root" )将工作目录切换到/root目录下 
 	*/
 	mount_root();
 out:
 	devtmpfs_mount();
+	/* MS_MOVE通常用于将挂载点从一个位置移动到另一个位置 */
+	/* mount_root里面挂载的过程中会调用init_chdir( "/root" )将工作目录切换到/root目录下 */
+	/* init_mount 这里将当前工作目录(/root)移动挂载至/目录下 */
 	init_mount(".", "/", NULL, MS_MOVE, NULL);
+	/* 切换当前进程的根目录至当前目录 /root */
 	init_chroot(".");
 }
 
