@@ -984,6 +984,14 @@ struct vfsmount *fc_mount(struct fs_context *fc)
 }
 EXPORT_SYMBOL(fc_mount);
 
+/*
+    https://blog.csdn.net/m0_74282605/article/details/129047430
+	调用vfs_kern_mount()函数执行内核挂载操作，
+	主要完成创建超级块super_block、根目录项dentry和inode结构体实例(由文件系统类型挂载函数完成),
+	创建mount结构体实例并建立各结构体实例之间的关联,
+	最后调用关联挂载点函数do_add_mount()建立mount和挂载点mountpoint实例、挂载点dentry实例之间的关联，
+	并将mount实例插入全局散列链表头部，挂载操作完成。
+*/
 struct vfsmount *vfs_kern_mount(struct file_system_type *type,
 				int flags, const char *name,
 				void *data)
@@ -3812,7 +3820,15 @@ static void __init init_mount_tree(void)
 	struct mnt_namespace *ns;
 	struct path root;
 
-	mnt = vfs_kern_mount(&rootfs_fs_type, 0, "rootfs", NULL);
+	/*
+		https://blog.csdn.net/m0_74282605/article/details/129047430
+		调用vfs_kern_mount()函数执行内核挂载操作，
+		主要完成创建超级块super_block、根目录项dentry和inode结构体实例(由文件系统类型挂载函数完成),
+		创建mount结构体实例并建立各结构体实例之间的关联,
+		最后调用关联挂载点函数do_add_mount()建立mount和挂载点mountpoint实例、挂载点dentry实例之间的关联，
+		并将mount实例插入全局散列链表头部，挂载操作完成。
+	*/
+	mnt = vfs_kern_mount(&rootfs_fs_type, 0, "rootfs", NULL); /* 这里挂载rootfs */
 	if (IS_ERR(mnt))
 		panic("Can't create rootfs");
 
@@ -3831,7 +3847,9 @@ static void __init init_mount_tree(void)
 	root.dentry = mnt->mnt_root;
 	mnt->mnt_flags |= MNT_LOCKED;
 
+	/* 设置当前进程的pwd，也就是当前路径，为rootfs的初始化路径 */
 	set_fs_pwd(current->fs, &root);
+	/* 设置当前进程的root，也就是根路径，为rootfs的初始化路径 */
 	set_fs_root(current->fs, &root);
 }
 
