@@ -598,7 +598,19 @@ void __init mount_root(void)
 		   挂载点为/root,并且调用init_chdir( "/root" )将工作目录切换到 /root目录下 
 		*/
 		/* ROOT_DEV ==> 0x100000 */
-		/* 创建设备节点 /dev/root */
+		/* ROOT_DEV = 0x100000 */
+		/* Root_NFS  ==> 0xff      */
+		/* Root_CIFS ==> 0xfe      */
+		/* Root_RAM0 ==> 0x100000  */
+		/* Root_RAM1 ==> 0x100001  */
+		/* Root_FD0  ==> 0x200000  */
+		/* Root_HDA1 ==> 0x300001  */
+		/* Root_HDA2 ==> 0x300002  */
+		/* Root_SDA1 ==> 0x800001  */
+		/* Root_SDA2 ==> 0x800002  */
+		/* Root_HDC1 ==> 0x1600001 */
+		/* Root_SR0  ==> 0xb00000  */
+		/* 创建设备节点 /dev/root ==> 并使/dev/root目录指向ROOT_DEV代表的设备*/
 		/* 
 			https://blog.csdn.net/jinking01/article/details/104666762
 			该方法中先调用create_dev方法，使/dev/root目录指向ROOT_DEV代表的设备
@@ -652,6 +664,17 @@ void __init prepare_namespace(void)
 		}
 		/* root_device_name ==> "/dev/ram0" */
 		/* ROOT_DEV = 0x100000 */
+		/* Root_NFS  ==> 0xff      */
+		/* Root_CIFS ==> 0xfe      */
+		/* Root_RAM0 ==> 0x100000  */
+		/* Root_RAM1 ==> 0x100001  */
+		/* Root_FD0  ==> 0x200000  */
+		/* Root_HDA1 ==> 0x300001  */
+		/* Root_HDA2 ==> 0x300002  */
+		/* Root_SDA1 ==> 0x800001  */
+		/* Root_SDA2 ==> 0x800002  */
+		/* Root_HDC1 ==> 0x1600001 */
+		/* Root_SR0  ==> 0xb00000  */
 		ROOT_DEV = name_to_dev_t(root_device_name);
 		if (strncmp(root_device_name, "/dev/", 5) == 0)
 		    /* root_device_name ==> "ram0" */
