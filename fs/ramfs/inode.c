@@ -103,6 +103,8 @@ struct inode *ramfs_get_inode(struct super_block *sb,
 static int
 ramfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
 {
+	/* dev ==> Root_RAM0 ==> 0x100000 */
+	/* ramfs_get_inode 这个函数可以    */
 	struct inode * inode = ramfs_get_inode(dir->i_sb, dir, mode, dev);
 	int error = -ENOSPC;
 

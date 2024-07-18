@@ -171,7 +171,7 @@ int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
 	error = security_path_mknod(&path, dentry, mode, dev);
 	if (!error)
 		error = vfs_mknod(path.dentry->d_inode, dentry, mode,
-				  new_decode_dev(dev));
+				  new_decode_dev(dev)); /* new_decode_dev(dev) ==> 0x100000 代表 Root_RAM0 ==> 0x100000 */
 	done_path_create(&path, dentry);
 	return error;
 }
