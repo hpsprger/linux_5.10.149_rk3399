@@ -1440,7 +1440,7 @@ static struct dentry *__lookup_hash(const struct qstr *name,
 	if (unlikely(IS_DEADDIR(dir)))
 		return ERR_PTR(-ENOENT);
 
-	/* 分配一个dentry，dentry的名字是name->name, 父节点为base  */
+	/* 分配一个dentry，dentry的名字是name->name【"root"】, 父节点为base  */
 	dentry = d_alloc(base, name);
 	if (unlikely(!dentry))
 		return ERR_PTR(-ENOMEM);
@@ -3479,7 +3479,6 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 		#3  create_dev (name=0xffffffc011042972 "/dev/root", dev=<optimized out>) at init/do_mounts.h:20
 		#4  mount_root () at init/do_mounts.c:572
 
-
 		(gdb) p name 
 		$27 = (struct filename *) 0xffffff8034fe8000
 		(gdb) p *name 
@@ -3691,7 +3690,7 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 			next = 0x0,
 			pprev = 0xffffff807fb27e50
 		},
-		d_parent = 0xffffff80350b06c0, //父目录指针 
+		d_parent = 0xffffff80350b06c0, //父 dentry 指针 
 		d_name = {   // 成员保存的是文件或者目录的名字。打开一个文件的时候，根据这个成员和用户输入的名字比较来搜寻目标文件
 			{
 			{
@@ -3736,7 +3735,7 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 			}
 		},
 		d_op = 0xffffffc010d93ac0 <simple_dentry_operations>,
-		d_sb = 0xffffff8034c21000, //目录的超级块指针 
+		d_sb = 0xffffff8034c21000, //dentry 的超级块指针 
 		d_time = 0, //最近使用时间 
 		d_fsdata = 0x0, //私有数据
 		{
@@ -4624,6 +4623,7 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 	}
 
 	*/
+	/* __lookup_hash 里面如果没有找到 就会调用 d_alloc分配一个新的dentry，将 path->dentry 做为dir，  */
 	dentry = __lookup_hash(&last, path->dentry, lookup_flags);
 	if (IS_ERR(dentry))
 		goto unlock;
@@ -4686,6 +4686,11 @@ inline struct dentry *user_path_create(int dfd, const char __user *pathname,
 EXPORT_SYMBOL(user_path_create);
 
 /* dev ==> Root_RAM0 ==> 0x100000 */
+/* 
+   p *dentry ==> dentry->d_name = "root"
+                 dentry->d_iname = "root"
+                 dentry->d_inode = 0x0
+ */
 int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
 {
 	bool is_whiteout = S_ISCHR(mode) && dev == WHITEOUT_DEV;
@@ -4710,6 +4715,11 @@ int vfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
 		return error;
 
 	/* dir->i_op->mknod ==> ramfs_mknod */
+	/* ramfs_mknod 里面会分配一个inode 【struct inode * inode = new_inode(sb);】 赋值给这个d_inode   */
+	/* ramfs_mknod--> ramfs_get_inode --> init_special_inode ==> 会将 dev赋值给
+		    inode->i_fop = &def_blk_fops;
+		    inode->i_rdev = rdev; 
+	*/
 	error = dir->i_op->mknod(dir, dentry, mode, dev);
 	if (!error)
 		fsnotify_create(dir, dentry);

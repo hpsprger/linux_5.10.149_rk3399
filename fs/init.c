@@ -172,8 +172,32 @@ int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
 		mode &= ~current_umask();
 	error = security_path_mknod(&path, dentry, mode, dev);
 	if (!error)
+	    /* vfs_mknod 会调用 ramfs_mknod 分配一个inode 【struct inode * inode = new_inode(sb);】 赋值给这个dentry的d_inode    */
+		/*  (gdb) p /x dentry->d_inode.i_rdev ==> 说明 这个dentry 就是 主次设备节点 Root_RAM0 对应的设备节点 
+                                             ==> 所以我们打开这个设备节点的时候，我们就拿到了这个i_rdev，就知道了这个设备节点对应的主次设备号，通过这个主次设备号 我们就能所以到对应的设备了，且我们也知道这个设备的fops
+            $61 = 0x100000 
+            (gdb) p    dentry->d_inode.i_fop 
+            $65 = (const struct file_operations *) 0xffffffc010d94a98 <def_blk_fops> 
+		*/
+		/* dir->i_op->mknod ==> ramfs_mknod */
+		/* ramfs_mknod 里面会分配一个inode 【struct inode * inode = new_inode(sb);】 赋值给这个d_inode   */
+		/* 
+			ramfs_mknod--> ramfs_get_inode --> init_special_inode ==> 会将 dev赋值给
+				inode->i_fop = &def_blk_fops;
+				inode->i_rdev = rdev; 
+		*/
 		error = vfs_mknod(path.dentry->d_inode, dentry, mode,
 				  new_decode_dev(dev)); /* new_decode_dev(dev) ==> 0x100000 代表 Root_RAM0 ==> 0x100000 */
+
+	/*
+		vfs_mknod 过后，打印下面的信息 
+		(gdb) p /x dentry->d_inode.i_rdev ==> 说明 这个dentry 就是 主次设备节点 Root_RAM0 对应的设备节点 
+		                                  ==> 所以我们打开这个设备节点的时候，我们就拿到了这个i_rdev，就知道了这个设备节点对应的主次设备号，通过这个主次设备号 我们就能所以到对应的设备了，且我们也知道这个设备的fops
+		$61 = 0x100000 
+		(gdb) p    dentry->d_inode.i_fop 
+		$65 = (const struct file_operations *) 0xffffffc010d94a98 <def_blk_fops>
+	*/
+
 	done_path_create(&path, dentry);
 	return error;
 }
