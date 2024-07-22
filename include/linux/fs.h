@@ -619,9 +619,9 @@ struct inode {
 	struct posix_acl	*i_default_acl;
 #endif
 
-	const struct inode_operations	*i_op;
+	const struct inode_operations	*i_op; /* inode 对应的操作函数 */
 	struct super_block	*i_sb;
-	struct address_space	*i_mapping;
+	struct address_space	*i_mapping;    /* inode 对应的 文件的地址空间 */
 
 #ifdef CONFIG_SECURITY
 	void			*i_security;

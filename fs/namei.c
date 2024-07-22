@@ -1440,10 +1440,15 @@ static struct dentry *__lookup_hash(const struct qstr *name,
 	if (unlikely(IS_DEADDIR(dir)))
 		return ERR_PTR(-ENOENT);
 
+	/* 分配一个dentry，dentry的名字是name->name, 父节点为base  */
 	dentry = d_alloc(base, name);
 	if (unlikely(!dentry))
 		return ERR_PTR(-ENOMEM);
 
+	/*  
+	(gdb) p dir->i_op->lookup
+	$43 = (struct dentry *(*)(struct inode *, struct dentry *, unsigned int)) 0xffffffc0101e3910 <simple_lookup>
+	*/
 	old = dir->i_op->lookup(dir, dentry, flags);
 	if (unlikely(old)) {
 		dput(dentry);
@@ -3475,6 +3480,205 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 		#4  mount_root () at init/do_mounts.c:572
 
 
+		(gdb) p name 
+		$27 = (struct filename *) 0xffffff8034fe8000
+		(gdb) p *name 
+		$28 = {
+		name = 0xffffff8034fe8020 "/dev/root",
+		uptr = 0x0,
+		refcnt = 1,
+		aname = 0x0,
+		iname = 0xffffff8034fe8020 "/dev/root"
+		}
+
+		(gdb) p dentry->d_parent->d_parent
+		$40 = (struct dentry *) 0xffffff80350040d8
+
+		(gdb) p *dentry->d_parent->d_parent  
+		$36 = {
+		d_flags = 2162688,
+		d_seq = {
+			seqcount = {
+			sequence = 2
+			}
+		},
+		d_hash = {
+			next = 0x0,
+			pprev = 0x0
+		},
+		d_parent = 0xffffff80350040d8,
+		d_name = {
+			{
+			{
+				hash = 0,
+				len = 1
+			},
+			hash_len = 4294967296
+			},
+			name = 0xffffff8035004110 "/"
+		},
+		d_inode = 0xffffff8035044000,
+		d_iname = "/", '\000' <repeats 30 times>,
+		d_lockref = {
+			{
+			{
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				count = 15
+			}
+			}
+		},
+		d_op = 0x0,
+		d_sb = 0xffffff8034c21000,
+		d_time = 0,
+		d_fsdata = 0x0,
+		{
+			d_lru = {
+			next = 0xffffff8035004170,
+			prev = 0xffffff8035004170
+			},
+			d_wait = 0xffffff8035004170
+		},
+		d_child = {
+			next = 0xffffff8035004180,
+			prev = 0xffffff8035004180
+		},
+		d_subdirs = {
+			next = 0xffffff80350b0ba0,
+			prev = 0xffffff80350b0768
+		},
+		d_u = {
+			d_alias = {
+			next = 0x0,
+			pprev = 0xffffff8035044168
+			},
+			d_in_lookup_hash = {
+			next = 0x0,
+			pprev = 0xffffff8035044168
+			},
+			d_rcu = {
+			next = 0x0,
+			func = 0xffffff8035044168
+			}
+		}
+		}
+
+
+		(gdb) p dentry->d_parent 
+		$33 = (struct dentry *) 0xffffff80350b06c0
+		(gdb) p *dentry->d_parent 
+		$34 = {
+		d_flags = 2097160,
+		d_seq = {
+			seqcount = {
+			sequence = 2
+			}
+		},
+		d_hash = {
+			next = 0x0,
+			pprev = 0xffffff807fcc6218
+		},
+		d_parent = 0xffffff80350040d8,
+		d_name = {
+			{
+			{
+				hash = 3523934252,
+				len = 3
+			},
+			hash_len = 16408836140
+			},
+			name = 0xffffff80350b06f8 "dev"
+		},
+		d_inode = 0xffffff8037e53210,
+		d_iname = "dev", '\000' <repeats 28 times>,
+		d_lockref = {
+			{
+			{
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				count = 5
+			}
+			}
+		},
+		d_op = 0xffffffc010d93ac0 <simple_dentry_operations>,
+		d_sb = 0xffffff8034c21000,
+		d_time = 0,
+		d_fsdata = 0x0,
+		{
+			d_lru = {
+			next = 0xffffff80350b0758,
+			prev = 0xffffff80350b0758
+			},
+			d_wait = 0xffffff80350b0758
+		},
+		d_child = {
+			next = 0xffffff8035004190,
+			prev = 0xffffff80350b0ac8
+		},
+		d_subdirs = {
+			next = 0xffffff8037f2a5b8,
+			prev = 0xffffff80350b0918
+		},
+		d_u = {
+			d_alias = {
+			next = 0x0,
+			pprev = 0xffffff8037e53378
+			},
+			d_in_lookup_hash = {
+			next = 0x0,
+			pprev = 0xffffff8037e53378
+			},
+			d_rcu = {
+			next = 0x0,
+			func = 0xffffff8037e53378
+			}
+		}
+		}
+
 		(gdb) p *dentry 
 		$12 = {
 		d_flags = 8,  //dentry状态位 
@@ -3498,7 +3702,7 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 			},
 			name = 0xffffff8037f2a548 "root"  // 成员保存的是文件或者目录的名字。打开一个文件的时候，根据这个成员和用户输入的名字比较来搜寻目标文件 
 		},
-		d_inode = 0x0, //目录的inode 
+		d_inode = 0x0, //dentry 对应的 inode 
 		d_iname = "root", '\000' <repeats 27 times>, //短的文件名 
 		d_lockref = {
 			{
@@ -4406,6 +4610,17 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 		hash_len = 17228933149
 	},
 	name = 0xffffff8034fe8025 "root"
+	}
+
+	(gdb) p name 
+	$29 = (struct filename *) 0xffffff8034fe8000
+	(gdb) p *name 
+	$30 = {
+	name = 0xffffff8034fe8020 "/dev/root",
+	uptr = 0x0,
+	refcnt = 1,
+	aname = 0x0,
+	iname = 0xffffff8034fe8020 "/dev/root"
 	}
 
 	*/
