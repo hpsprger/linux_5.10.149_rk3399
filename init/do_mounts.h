@@ -27,6 +27,7 @@ extern int root_mountflags;
 /* Root_SDA2 ==> 0x800002  */
 /* Root_HDC1 ==> 0x1600001 */
 /* Root_SR0  ==> 0xb00000  */
+/* create_dev 这个函数的功能就是创建一个设备节点，名字就是name， 对应的主次设备号就是 dev  */
 static inline __init int create_dev(char *name, dev_t dev)
 {
 	init_unlink(name);

@@ -3819,7 +3819,6 @@ static void __init init_mount_tree(void)
 	struct mount *m;
 	struct mnt_namespace *ns;
 	struct path root;
-
 	/*
 		https://blog.csdn.net/m0_74282605/article/details/129047430
 		调用vfs_kern_mount()函数执行内核挂载操作，

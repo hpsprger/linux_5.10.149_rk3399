@@ -124,7 +124,7 @@ static void __init handle_initrd(void)
 bool __init initrd_load(void)
 {
 	if (mount_initrd) {
-		/* rockllee: 创建 /dev/ram0 ==> Root_RAM0 = MKDEV(RAMDISK_MAJOR, 0) */
+		/* 创建设备节点/dev/ram， 这个设备节点对应的主次设备号就是 Root_RAM0 = MKDEV(RAMDISK_MAJOR, 0)   */
 		create_dev("/dev/ram", Root_RAM0); 
 
 		/*

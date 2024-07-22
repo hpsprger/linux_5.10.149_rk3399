@@ -592,11 +592,6 @@ void __init mount_root(void)
 #endif
 #ifdef CONFIG_BLOCK /* initrd.image ramdisk镜像走这里 */
 	{
-		/* 
-		   创建ROOT_DEV对应的设备节点/dev/root,
-		   如果没有指定rootfstype 命令行参数就尝试遍历文件系统类型对 /dev/root进行挂载，
-		   挂载点为/root,并且调用init_chdir( "/root" )将工作目录切换到 /root目录下 
-		*/
 		/* ROOT_DEV ==> 0x100000 */
 		/* ROOT_DEV = 0x100000 */
 		/* Root_NFS  ==> 0xff      */
@@ -617,6 +612,12 @@ void __init mount_root(void)
 			【create_dev函数的作用原来如此，之前认为只是创建了一个设备节点，原来这里实现了指向的这个效果了】，
 			访问/dev/root目录等价于访问ROOT_DEV代表的设备的内容。
 			此时，/dev/root目录就等价于硬盘分区/dev/nvme0n1p2里的根目录。 
+		*/
+		/*
+		   创建一个设备节点，名字叫做/dev/root，这个设备节点 对应的 主次设备号 就是 ROOT_DEV 
+		   这里的 ROOT_DEV = Root_RAM0 
+		   所以这里的  /dev/root 与 /dev/ram 其实都是同一个设备，因为他们的主次设备节点号都是 ROOT_DEV = Root_RAM0 
+		   后面通过 挂载/dev/root，就是挂载的是 Root_RAM0
 		*/
 		int err = create_dev("/dev/root", ROOT_DEV);
 

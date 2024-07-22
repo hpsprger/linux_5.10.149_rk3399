@@ -509,13 +509,23 @@ static int __init brd_init(void)
 	 *	If (X / max_part) was not already created it will be created
 	 *	dynamically.
 	 */
+	/* 
+	   register_blkdev 【注册块设备】 的功能已经退化了，
+	   这个函数 只是 让你在 cat  /proc/devices 的时候 使用 ，能让你看到一些信息，
+	   或者 register_blkdev  传入的主设备号 为0的时候，register_blkdev  函数会为你分配并返回一个 主设备号  
 
+	   设置主设备号  ==> 主设备号怎么来的呢？ 你可以自己确定，也可以让系统给你分配 ==> 系统给你分配的话，
+	   比如用这种方式  major = register_blkdev(0, "ramblock")，第一个入参为0，内核会为你分配一个主设备号，
+	   并且会让你在 cat /proc/devices 的时候 看到一些东西 信息 , 如下，你可以看到有哪一些块设备【字符设备驱动中，
+	   register_chrdev还需要传入一个非常重要的fops结构体，register_blkdev这里不需要】
+	*/
 	if (register_blkdev(RAMDISK_MAJOR, "ramdisk"))
 		return -EIO;
 
 	brd_check_and_reset_par();
 
 	for (i = 0; i < rd_nr; i++) {
+		/* 这里调用 brd_alloc，来分配一个 gendisk 结构体实例以及为该块设备分配了队列 ，下面就是将队列进行赋值操作 */
 		brd = brd_alloc(i);
 		if (!brd)
 			goto out_free;
@@ -529,10 +539,18 @@ static int __init brd_init(void)
 		 * associate with queue just before adding disk for
 		 * avoiding to mess up failure path
 		 */
+		/* 上面调用 brd_alloc，来分配一个 gendisk 结构体实例以及为该块设备分配了队列 ，这里就是将队列进行赋值操作 */
 		brd->brd_disk->queue = brd->brd_queue;
+		/*  调用add_disk 来注册  gendisk 结构体  */
 		add_disk(brd->brd_disk);
 	}
 
+	/*
+		这里传入了一个参数 brd_probe 
+		调用void blk_register_region()来将块设备注册到系统中 
+		该函数会将块设备添加到bdev_map中，这是一个有内核维护的数据库，包含了所有的块设备。在打开块设备是，必然会调用blkdev_get,而blkdev_get会对bdev_map进行查询
+		https://blog.csdn.net/peng_cao/article/details/73826530 
+	*/
 	blk_register_region(MKDEV(RAMDISK_MAJOR, 0), 1UL << MINORBITS,
 				  THIS_MODULE, brd_probe, NULL, NULL);
 
