@@ -3442,6 +3442,10 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 	 */
 	lookup_flags &= LOOKUP_REVAL;
 
+	/*
+		(gdb) p *name 
+		$2 = {name = "/dev/root", uptr = 0x0, refcnt = 1, aname = 0x0, iname = "/dev/root"}
+	*/
 	name = filename_parentat(dfd, name, lookup_flags, path, &last, &type);
 	if (IS_ERR(name))
 		return ERR_CAST(name);
@@ -3460,6 +3464,951 @@ static struct dentry *filename_create(int dfd, struct filename *name,
 	 */
 	lookup_flags |= LOOKUP_CREATE | LOOKUP_EXCL;
 	inode_lock_nested(path->dentry->d_inode, I_MUTEX_PARENT);
+
+	/*
+
+		(gdb) bt
+		#0  filename_create (dfd=dfd@entry=-100, name=0xffffff8034fe8000, path=path@entry=0xffffffc011aebd78, lookup_flags=1536, lookup_flags@entry=0) at fs/namei.c:3468
+		#1  kern_path_create (dfd=dfd@entry=-100, pathname=pathname@entry=0xffffffc011042972 "/dev/root", path=0xffffffc011aebd78,  path@entry=0xffffffc011aebda8, lookup_flags=lookup_flags@entry=0) at fs/namei.c:3503
+		#2  init_mknod (filename=filename@entry=0xffffffc011042972 "/dev/root", mode=mode@entry=24960, dev=256) at fs/init.c:152
+		#3  create_dev (name=0xffffffc011042972 "/dev/root", dev=<optimized out>) at init/do_mounts.h:20
+		#4  mount_root () at init/do_mounts.c:572
+
+
+		(gdb) p *dentry 
+		$12 = {
+		d_flags = 8,  //dentry状态位 
+		d_seq = {
+			seqcount = {
+			sequence = 0
+			}
+		},
+		d_hash = { //哈希链表节点，dentry被放在哈希链表dentry_cache上，方便寻找
+			next = 0x0,
+			pprev = 0xffffff807fb27e50
+		},
+		d_parent = 0xffffff80350b06c0, //父目录指针 
+		d_name = {   // 成员保存的是文件或者目录的名字。打开一个文件的时候，根据这个成员和用户输入的名字比较来搜寻目标文件
+			{
+			{
+				hash = 49063965,
+				len = 4
+			},
+			hash_len = 17228933149
+			},
+			name = 0xffffff8037f2a548 "root"  // 成员保存的是文件或者目录的名字。打开一个文件的时候，根据这个成员和用户输入的名字比较来搜寻目标文件 
+		},
+		d_inode = 0x0, //目录的inode 
+		d_iname = "root", '\000' <repeats 27 times>, //短的文件名 
+		d_lockref = {
+			{
+			{
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				count = 1
+			}
+			}
+		},
+		d_op = 0xffffffc010d93ac0 <simple_dentry_operations>,
+		d_sb = 0xffffff8034c21000, //目录的超级块指针 
+		d_time = 0, //最近使用时间 
+		d_fsdata = 0x0, //私有数据
+		{
+			d_lru = {
+			next = 0xffffff8037f2a5a8,
+			prev = 0xffffff8037f2a5a8
+			},
+			d_wait = 0xffffff8037f2a5a8
+		},
+		d_child = {
+			next = 0xffffff803500a9f0,
+			prev = 0xffffff80350b0778
+		},
+		d_subdirs = {
+			next = 0xffffff8037f2a5c8,
+			prev = 0xffffff8037f2a5c8
+		},
+		d_u = {
+			d_alias = {
+			next = 0x0,
+			pprev = 0x0
+			},
+			d_in_lookup_hash = {
+			next = 0x0,
+			pprev = 0x0
+			},
+			d_rcu = {
+			next = 0x0,
+			func = 0x0
+			}
+		}
+		}
+
+	(gdb) p *path->dentry 
+	$16 = {
+	d_flags = 2097160,
+	d_seq = {
+		seqcount = {
+		sequence = 2
+		}
+	},
+	d_hash = {
+		next = 0x0,
+		pprev = 0xffffff807fcc6218
+	},
+	d_parent = 0xffffff80350040d8,
+	d_name = {
+		{
+		{
+			hash = 3523934252,
+			len = 3
+		},
+		hash_len = 16408836140
+		},
+		name = 0xffffff80350b06f8 "dev"
+	},
+	d_inode = 0xffffff8037e53210,
+	d_iname = "dev", '\000' <repeats 28 times>,
+	d_lockref = {
+		{
+		{
+			lock = {
+			{
+				rlock = {
+				raw_lock = {
+					{
+					val = {
+						counter = 0
+					},
+					{
+						locked = 0 '\000',
+						pending = 0 '\000'
+					},
+					{
+						locked_pending = 0,
+						tail = 0
+					}
+					}
+				},
+				magic = 3735899821,
+				owner_cpu = 4294967295,
+				owner = 0xffffffffffffffff
+				}
+			}
+			},
+			count = 5
+		}
+		}
+	},
+	d_op = 0xffffffc010d93ac0 <simple_dentry_operations>,
+	d_sb = 0xffffff8034c21000,
+	d_time = 0,
+	d_fsdata = 0x0,
+	{
+		d_lru = {
+		next = 0xffffff80350b0758,
+		prev = 0xffffff80350b0758
+		},
+		d_wait = 0xffffff80350b0758
+	},
+	d_child = {
+		next = 0xffffff8035004190,
+		prev = 0xffffff80350b0ac8
+	},
+	d_subdirs = {
+		next = 0xffffff8037f2a5b8,
+		prev = 0xffffff80350b0918
+	},
+	d_u = {
+		d_alias = {
+		next = 0x0,
+		pprev = 0xffffff8037e53378
+		},
+		d_in_lookup_hash = {
+		next = 0x0,
+		pprev = 0xffffff8037e53378
+		},
+		d_rcu = {
+		next = 0x0,
+		func = 0xffffff8037e53378
+		}
+	}
+	}
+
+
+	(gdb) p *path->mnt.mnt_root 
+	$20 = {
+	d_flags = 2162688,
+	d_seq = {
+		seqcount = {
+		sequence = 2
+		}
+	},
+	d_hash = {
+		next = 0x0,
+		pprev = 0x0
+	},
+	d_parent = 0xffffff80350040d8,
+	d_name = {
+		{
+		{
+			hash = 0,
+			len = 1
+		},
+		hash_len = 4294967296
+		},
+		name = 0xffffff8035004110 "/"
+	},
+	d_inode = 0xffffff8035044000,
+	d_iname = "/", '\000' <repeats 30 times>,
+	d_lockref = {
+		{
+		{
+			lock = {
+			{
+				rlock = {
+				raw_lock = {
+					{
+					val = {
+						counter = 0
+					},
+					{
+						locked = 0 '\000',
+						pending = 0 '\000'
+					},
+					{
+						locked_pending = 0,
+						tail = 0
+					}
+					}
+				},
+				magic = 3735899821,
+				owner_cpu = 4294967295,
+				owner = 0xffffffffffffffff
+				}
+			}
+			},
+			count = 15
+		}
+		}
+	},
+	d_op = 0x0,
+	d_sb = 0xffffff8034c21000,
+	d_time = 0,
+	d_fsdata = 0x0,
+	{
+		d_lru = {
+		next = 0xffffff8035004170,
+		prev = 0xffffff8035004170
+		},
+		d_wait = 0xffffff8035004170
+	},
+	d_child = {
+		next = 0xffffff8035004180,
+		prev = 0xffffff8035004180
+	},
+	d_subdirs = {
+		next = 0xffffff80350b0ba0,
+		prev = 0xffffff80350b0768
+	},
+	d_u = {
+		d_alias = {
+		next = 0x0,
+		pprev = 0xffffff8035044168
+		},
+		d_in_lookup_hash = {
+		next = 0x0,
+		pprev = 0xffffff8035044168
+		},
+		d_rcu = {
+		next = 0x0,
+		func = 0xffffff8035044168
+		}
+	}
+	}
+
+
+	(gdb) p *path->mnt.mnt_sb 
+	$22 = {
+	s_list = {
+		next = 0xffffff8034c21800,
+		prev = 0xffffff8034c20800
+	},
+	s_dev = 2,
+	s_blocksize_bits = 12 '\f',
+	s_blocksize = 4096,
+	s_maxbytes = 9223372036854775807,
+	s_type = 0xffffffc0117622e8 <rootfs_fs_type>,
+	s_op = 0xffffffc010da3080 <ramfs_ops>,
+	dq_op = 0x0,
+	s_qcop = 0x0,
+	s_export_op = 0x0,
+	s_flags = 1610612736,
+	s_iflags = 0,
+	s_magic = 2240043254,
+	s_root = 0xffffff80350040d8,
+	s_umount = {
+		count = {
+		counter = 0
+		},
+		owner = {
+		counter = 0
+		},
+		osq = {
+		tail = {
+			counter = 0
+		}
+		},
+		wait_lock = {
+		raw_lock = {
+			{
+			val = {
+				counter = 0
+			},
+			{
+				locked = 0 '\000',
+				pending = 0 '\000'
+			},
+			{
+				locked_pending = 0,
+				tail = 0
+			}
+			}
+		},
+		magic = 3735899821,
+		owner_cpu = 4294967295,
+		owner = 0xffffffffffffffff
+		},
+		wait_list = {
+		next = 0xffffff8034c210a0,
+		prev = 0xffffff8034c210a0
+		}
+	},
+	s_count = 1,
+	s_active = {
+		counter = 2
+	},
+	s_security = 0x0,
+	s_xattr = 0x0,
+	s_roots = {
+		first = 0x0
+	},
+	s_mounts = {
+		next = 0xffffff8034e741b0,
+		prev = 0xffffff8034fe0070
+	},
+	s_bdev = 0x0,
+	s_bdi = 0xffffffc011a7b7b8 <noop_backing_dev_info>,
+	s_mtd = 0x0,
+	s_instances = {
+		next = 0x0,
+		pprev = 0xffffffc011762328 <rootfs_fs_type+64>
+	},
+	s_quota_types = 0,
+	s_dquot = {
+		flags = 0,
+		dqio_sem = {
+		count = {
+			counter = 0
+		},
+		owner = {
+			counter = 0
+		},
+		osq = {
+			tail = {
+			counter = 0
+			}
+		},
+		wait_lock = {
+			raw_lock = {
+			{
+				val = {
+				counter = 0
+				},
+				{
+				locked = 0 '\000',
+				pending = 0 '\000'
+				},
+				{
+				locked_pending = 0,
+				tail = 0
+				}
+			}
+			},
+			magic = 3735899821,
+			owner_cpu = 4294967295,
+			owner = 0xffffffffffffffff
+		},
+		wait_list = {
+			next = 0xffffff8034c21148,
+			prev = 0xffffff8034c21148
+		}
+		},
+		files = {0x0, 0x0, 0x0},
+		info = {{
+			dqi_format = 0x0,
+			dqi_fmt_id = 0,
+			dqi_dirty_list = {
+			next = 0x0,
+			prev = 0x0
+			},
+			dqi_flags = 0,
+			dqi_bgrace = 0,
+			dqi_igrace = 0,
+			dqi_max_spc_limit = 0,
+			dqi_max_ino_limit = 0,
+			dqi_priv = 0x0
+		}, {
+			dqi_format = 0x0,
+			dqi_fmt_id = 0,
+			dqi_dirty_list = {
+			next = 0x0,
+			prev = 0x0
+			},
+			dqi_flags = 0,
+			dqi_bgrace = 0,
+			dqi_igrace = 0,
+			dqi_max_spc_limit = 0,
+			dqi_max_ino_limit = 0,
+			dqi_priv = 0x0
+		}, {
+			dqi_format = 0x0,
+			dqi_fmt_id = 0,
+			dqi_dirty_list = {
+			next = 0x0,
+			prev = 0x0
+			},
+			dqi_flags = 0,
+			dqi_bgrace = 0,
+			dqi_igrace = 0,
+			dqi_max_spc_limit = 0,
+			dqi_max_ino_limit = 0,
+			dqi_priv = 0x0
+		}},
+		ops = {0x0, 0x0, 0x0}
+	},
+	s_writers = {
+		frozen = 0,
+		wait_unfrozen = {
+		lock = {
+			{
+			rlock = {
+				raw_lock = {
+				{
+					val = {
+					counter = 0
+					},
+					{
+					locked = 0 '\000',
+					pending = 0 '\000'
+					},
+					{
+					locked_pending = 0,
+					tail = 0
+					}
+				}
+				},
+				magic = 3735899821,
+				owner_cpu = 4294967295,
+				owner = 0xffffffffffffffff
+			}
+			}
+		},
+		head = {
+			next = 0xffffff8034c21280,
+			prev = 0xffffff8034c21280
+		}
+		},
+		rw_sem = {{
+			rss = {
+			gp_state = 0,
+			gp_count = 0,
+			gp_wait = {
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				head = {
+				next = 0xffffff8034c212b0,
+				prev = 0xffffff8034c212b0
+				}
+			},
+			cb_head = {
+				next = 0x0,
+				func = 0x0
+			}
+			},
+			read_count = 0xffffffc01130f9f0,
+			writer = {
+			task = 0x0
+			},
+			waiters = {
+			lock = {
+				{
+				rlock = {
+					raw_lock = {
+					{
+						val = {
+						counter = 0
+						},
+						{
+						locked = 0 '\000',
+						pending = 0 '\000'
+						},
+						{
+						locked_pending = 0,
+						tail = 0
+						}
+					}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+				}
+				}
+			},
+			head = {
+				next = 0xffffff8034c212f8,
+				prev = 0xffffff8034c212f8
+			}
+			},
+			block = {
+			counter = 0
+			}
+		}, {
+			rss = {
+			gp_state = 0,
+			gp_count = 0,
+			gp_wait = {
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				head = {
+				next = 0xffffff8034c21330,
+				prev = 0xffffff8034c21330
+				}
+			},
+			cb_head = {
+				next = 0x0,
+				func = 0x0
+			}
+			},
+			read_count = 0xffffffc01130f9f4,
+			writer = {
+			task = 0x0
+			},
+			waiters = {
+			lock = {
+				{
+				rlock = {
+					raw_lock = {
+					{
+						val = {
+						counter = 0
+						},
+						{
+						locked = 0 '\000',
+						pending = 0 '\000'
+						},
+						{
+						locked_pending = 0,
+						tail = 0
+						}
+					}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+				}
+				}
+			},
+			head = {
+				next = 0xffffff8034c21378,
+				prev = 0xffffff8034c21378
+			}
+			},
+			block = {
+			counter = 0
+			}
+		}, {
+			rss = {
+			gp_state = 0,
+			gp_count = 0,
+			gp_wait = {
+				lock = {
+				{
+					rlock = {
+					raw_lock = {
+						{
+						val = {
+							counter = 0
+						},
+						{
+							locked = 0 '\000',
+							pending = 0 '\000'
+						},
+						{
+							locked_pending = 0,
+							tail = 0
+						}
+						}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+					}
+				}
+				},
+				head = {
+				next = 0xffffff8034c213b0,
+				prev = 0xffffff8034c213b0
+				}
+			},
+			cb_head = {
+				next = 0x0,
+				func = 0x0
+			}
+			},
+			read_count = 0xffffffc01130f9f8,
+			writer = {
+			task = 0x0
+			},
+			waiters = {
+			lock = {
+				{
+				rlock = {
+					raw_lock = {
+					{
+						val = {
+						counter = 0
+						},
+						{
+						locked = 0 '\000',
+						pending = 0 '\000'
+						},
+						{
+						locked_pending = 0,
+						tail = 0
+						}
+					}
+					},
+					magic = 3735899821,
+					owner_cpu = 4294967295,
+					owner = 0xffffffffffffffff
+				}
+				}
+			},
+			head = {
+				next = 0xffffff8034c213f8,
+				prev = 0xffffff8034c213f8
+			}
+			},
+			block = {
+			counter = 0
+			}
+		}}
+	},
+	s_fs_info = 0xffffff8034d95c80,
+	s_time_gran = 1,
+	s_time_min = -9223372036854775808,
+	s_time_max = 9223372036854775807,
+	s_fsnotify_mask = 0,
+	s_fsnotify_marks = 0x0,
+	s_id = "rootfs", '\000' <repeats 25 times>,
+	s_uuid = {
+		b = '\000' <repeats 15 times>
+	},
+	s_max_links = 0,
+	s_mode = 0,
+	s_vfs_rename_mutex = {
+		owner = {
+		counter = 0
+		},
+		wait_lock = {
+		{
+			rlock = {
+			raw_lock = {
+				{
+				val = {
+					counter = 0
+				},
+				{
+					locked = 0 '\000',
+					pending = 0 '\000'
+				},
+				{
+					locked_pending = 0,
+					tail = 0
+				}
+				}
+			},
+			magic = 3735899821,
+			owner_cpu = 4294967295,
+			owner = 0xffffffffffffffff
+			}
+		}
+		},
+		osq = {
+		tail = {
+			counter = 0
+		}
+		},
+		wait_list = {
+		next = 0xffffff8034c214a0,
+		prev = 0xffffff8034c214a0
+		}
+	},
+	s_subtype = 0x0,
+	s_d_op = 0x0,
+	cleancache_poolid = -1,
+	s_shrink = {
+		count_objects = 0xffffffc0101baee8 <super_cache_count>,
+		scan_objects = 0xffffffc0101bb578 <super_cache_scan>,
+		batch = 1024,
+		seeks = 2,
+		flags = 3,
+		list = {
+		next = 0xffffff8034c21ce8,
+		prev = 0xffffff8034c20ce8
+		},
+		id = 1,
+		nr_deferred = 0xffffff8034d95c00
+	},
+	s_remove_count = {
+		counter = 2
+	},
+	s_fsnotify_inode_refs = {
+		counter = 0
+	},
+	s_readonly_remount = 0,
+	s_wb_err = 0,
+	s_dio_done_wq = 0x0,
+	s_pins = {
+		first = 0x0
+	},
+	s_user_ns = 0xffffffc01176f1d0 <init_user_ns>,
+	s_dentry_lru = {
+		node = 0xffffff8034c2c500,
+		list = {
+		next = 0xffffff8034c20d60,
+		prev = 0xffffff8034c21560
+		},
+		shrinker_id = 1,
+		memcg_aware = true
+	},
+	s_inode_lru = {
+		node = 0xffffff8034e24000,
+		list = {
+		next = 0xffffff8034c21540,
+		prev = 0xffffff8034c21d40
+		},
+		shrinker_id = 1,
+		memcg_aware = true
+	},
+	rcu = {
+		next = 0x0,
+		func = 0x0
+	},
+	destroy_work = {
+		data = {
+		counter = 0
+		},
+		entry = {
+		next = 0x0,
+		prev = 0x0
+		},
+		func = 0x0
+	},
+	s_sync_lock = {
+		owner = {
+		counter = 0
+		},
+		wait_lock = {
+		{
+			rlock = {
+			raw_lock = {
+				{
+				val = {
+					counter = 0
+				},
+				{
+					locked = 0 '\000',
+					pending = 0 '\000'
+				},
+				{
+					locked_pending = 0,
+					tail = 0
+				}
+				}
+			},
+			magic = 3735899821,
+			owner_cpu = 4294967295,
+			owner = 0xffffffffffffffff
+			}
+		}
+		},
+		osq = {
+		tail = {
+			counter = 0
+		}
+		},
+		wait_list = {
+		next = 0xffffff8034c215d0,
+		prev = 0xffffff8034c215d0
+		}
+	},
+	s_stack_depth = 0,
+	s_inode_list_lock = {
+		{
+		rlock = {
+			raw_lock = {
+			{
+				val = {
+				counter = 0
+				},
+				{
+				locked = 0 '\000',
+				pending = 0 '\000'
+				},
+				{
+				locked_pending = 0,
+				tail = 0
+				}
+			}
+			},
+			magic = 3735899821,
+			owner_cpu = 4294967295,
+			owner = 0xffffffffffffffff
+		}
+		}
+	},
+	s_inodes = {
+		next = 0xffffff8035058c68,
+		prev = 0xffffff8035044148
+	},
+	s_inode_wblist_lock = {
+		{
+		rlock = {
+			raw_lock = {
+			{
+				val = {
+				counter = 0
+				},
+				{
+				locked = 0 '\000',
+				pending = 0 '\000'
+				},
+				{
+				locked_pending = 0,
+				tail = 0
+				}
+			}
+			},
+			magic = 3735899821,
+			owner_cpu = 4294967295,
+			owner = 0xffffffffffffffff
+		}
+		}
+	},
+	s_inodes_wb = {
+		next = 0xffffff8034c21640,
+		prev = 0xffffff8034c21640
+	}
+	}
+
+
+	(gdb) p *path->mnt 
+	$17 = {
+	mnt_root = 0xffffff80350040d8,
+	mnt_sb = 0xffffff8034c21000,
+	mnt_flags = 8388608
+	}
+
+	(gdb) p *path
+	$21 = {
+	mnt = 0xffffff8034e74160,
+	dentry = 0xffffff80350b06c0
+	}
+
+	(gdb)  p /x lookup_flags 
+	$24 = 0x600
+
+	(gdb) p last 
+	$25 = {
+	{
+		{
+		hash = 49063965,
+		len = 4
+		},
+		hash_len = 17228933149
+	},
+	name = 0xffffff8034fe8025 "root"
+	}
+
+	*/
 	dentry = __lookup_hash(&last, path->dentry, lookup_flags);
 	if (IS_ERR(dentry))
 		goto unlock;

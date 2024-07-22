@@ -151,6 +151,8 @@ int __init init_stat(const char *filename, struct kstat *stat, int flags)
 }
 
 /* init_mknod (filename="/dev/root", mode=24960, dev=256) */
+/* create_dev("/dev/ram", Root_RAM0); */
+/* create_dev("/dev/root", ROOT_DEV); ROOT_DEV = Root_RAM0 */
 int __init init_mknod(const char *filename, umode_t mode, unsigned int dev)
 {
 	struct dentry *dentry;
