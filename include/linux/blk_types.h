@@ -201,8 +201,8 @@ static inline void bio_issue_init(struct bio_issue *issue,
  * stacking drivers)
  */
 struct bio {
-	struct bio		*bi_next;	/* request queue link */
-	struct gendisk		*bi_disk;
+	struct bio		*bi_next;	/* request queue link ==> 指向下一个 bio 结构体，用于链接多个 bio 结构体，形成一个链表，描述一个完整的 I/O 操作。 */
+	struct gendisk		*bi_disk; /* 指向目标磁盘的 gendisk 结构体。gendisk 结构体描述了一个块设备 */
 	unsigned int		bi_opf;		/* bottom bits req flags,
 						 * top bits REQ_OP. Use
 						 * accessors.
@@ -243,7 +243,7 @@ struct bio {
 #endif
 	};
 
-	unsigned short		bi_vcnt;	/* how many bio_vec's */
+	unsigned short		bi_vcnt;	/* how many bio_vec's */ /* bio_vec 结构体数组中的元素个数。bio_vec 描述了每个段的数据缓冲区。 */
 
 	/*
 	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
@@ -253,7 +253,7 @@ struct bio {
 
 	atomic_t		__bi_cnt;	/* pin count */
 
-	struct bio_vec		*bi_io_vec;	/* the actual vec list */
+	struct bio_vec		*bi_io_vec;	/* the actual vec list */ /* 指向 bio_vec 数组的指针，每个 bio_vec 描述一个数据缓冲区（段） */
 
 	struct bio_set		*bi_pool;
 

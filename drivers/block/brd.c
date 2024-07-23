@@ -172,7 +172,7 @@ static void brd_free_pages(struct brd_device *brd)
  */
 static int copy_to_brd_setup(struct brd_device *brd, sector_t sector, size_t n)
 {
-	unsigned int offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT;
+	unsigned int offset = (sector & (PAGE_SECTORS-1)) << SECTOR_SHIFT; /* The size of one sector is 512 = 2**9 */
 	size_t copy;
 
 	copy = min_t(size_t, n, PAGE_SIZE - offset);
@@ -253,8 +253,13 @@ static void copy_from_brd(void *dst, struct brd_device *brd,
 }
 
 /*
- * Process a single bvec of a bio.
+ * Process a single bvec of a bio. ==> struct bio 是块设备层（block layer）中的关键结构体，负责管理和描述 I/O 请求，确保数据能够有效地读写到磁盘上。
  */
+/* 
+	一个sector 是 512字节 
+	brd_do_bvec (brd=0xffffff803540c980, page=0xffffffff00b2f680, len=0x1000, off=0x0, op=0x1, sector=0x40348) at drivers/block/brd.c:261
+    op=0x1 ==> 写；  op=0x0 ==> 读
+*/
 static int brd_do_bvec(struct brd_device *brd, struct page *page,
 			unsigned int len, unsigned int off, unsigned int op,
 			sector_t sector)
@@ -267,12 +272,12 @@ static int brd_do_bvec(struct brd_device *brd, struct page *page,
 		if (err)
 			goto out;
 	}
-
+	/* 将page 映射到 虚拟地址 mem上 */
 	mem = kmap_atomic(page);
-	if (!op_is_write(op)) {
+	if (!op_is_write(op)) { /* read */
 		copy_from_brd(mem + off, brd, sector, len);
 		flush_dcache_page(page);
-	} else {
+	} else {  /* write */
 		flush_dcache_page(page);
 		copy_to_brd(brd, mem + off, sector, len);
 	}
@@ -282,6 +287,43 @@ out:
 	return err;
 }
 
+/*
+	(gdb) p  *bio 
+	$8 = {
+		bi_next = 0x0,
+		bi_disk = 0xffffff803567c800,
+		bi_opf = 0x801,
+		bi_flags = 0x380,
+		bi_ioprio = 0x0,
+		bi_write_hint = 0x0,
+		bi_status = 0x0,
+		bi_partno = 0x0,
+		__bi_remaining = {
+			counter = 0x1
+		},
+		bi_iter = {
+			bi_sector = 0x40348,
+			bi_size = 0x1000,
+			bi_idx = 0x0,
+			bi_bvec_done = 0x0
+		},
+		bi_end_io = 0xffffffc0101f6280 <end_bio_bh_io_sync>,
+		bi_private = 0xffffff806741cb80,
+		bi_blkg = 0xffffff8035671600,
+		bi_issue = {
+			value = 0x40030e4e0ed490
+		},
+		{<No data fields>},
+		bi_vcnt = 0x1,
+		bi_max_vecs = 0x1,
+		__bi_cnt = {
+			counter = 0x1
+		},
+		bi_io_vec = 0xffffff8058c0a970,
+		bi_pool = 0xffffffc011a9a3d0 <fs_bio_set>,
+		bi_inline_vecs = 0xffffff8058c0a970
+	}
+*/
 static blk_qc_t brd_submit_bio(struct bio *bio)
 {
 	struct brd_device *brd = bio->bi_disk->private_data;
@@ -293,6 +335,7 @@ static blk_qc_t brd_submit_bio(struct bio *bio)
 	if (bio_end_sector(bio) > get_capacity(bio->bi_disk))
 		goto io_error;
 
+	/* 逐个遍历 bio.bi_io_vec ==> bvec指向每次遍历的对象  */
 	bio_for_each_segment(bvec, bio, iter) {
 		unsigned int len = bvec.bv_len;
 		int err;
