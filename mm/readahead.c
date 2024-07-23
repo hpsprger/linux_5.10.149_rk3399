@@ -117,6 +117,10 @@ EXPORT_SYMBOL(read_cache_pages);
 static void read_pages(struct readahead_control *rac, struct list_head *pages,
 		bool skip_page)
 {
+	/*
+		(gdb) p rac->mapping->a_ops
+		$2 = (const struct address_space_operations *) 0xffffffc010d9f100 <ext4_da_aops>
+	*/
 	const struct address_space_operations *aops = rac->mapping->a_ops;
 	struct page *page;
 	struct blk_plug plug;
@@ -126,6 +130,10 @@ static void read_pages(struct readahead_control *rac, struct list_head *pages,
 
 	blk_start_plug(&plug);
 
+	/*
+		(gdb) p aops->readahead
+		$3 = (void (*)(struct readahead_control *)) 0xffffffc01027196c <ext4_readahead>
+	*/
 	if (aops->readahead) {
 		aops->readahead(rac);
 		/* Clean up the remaining pages */

@@ -926,6 +926,10 @@ static blk_qc_t __submit_bio(struct bio *bio)
 	blk_qc_t ret = BLK_QC_T_NONE;
 
 	if (blk_crypto_bio_prep(&bio)) {
+		/*
+			(gdb) p disk->fops->submit_bio
+			$6 = (blk_qc_t (*)(struct bio *)) 0xffffffc0107f0854 <brd_submit_bio>
+		*/
 		if (!disk->fops->submit_bio)
 			return blk_mq_submit_bio(bio);
 		ret = disk->fops->submit_bio(bio);
