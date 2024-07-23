@@ -71,7 +71,7 @@ static struct page *brd_lookup_page(struct brd_device *brd, sector_t sector)
 	 */
 	rcu_read_lock();
 	idx = sector >> PAGE_SECTORS_SHIFT; /* sector to page index */
-	page = radix_tree_lookup(&brd->brd_pages, idx);
+	page = radix_tree_lookup(&brd->brd_pages, idx); /* 在 radix tree 中，通过key(idx)来进行索引 */
 	rcu_read_unlock();
 
 	BUG_ON(page && page->index != idx);
@@ -90,8 +90,8 @@ static struct page *brd_insert_page(struct brd_device *brd, sector_t sector)
 	struct page *page;
 	gfp_t gfp_flags;
 
-	page = brd_lookup_page(brd, sector);
-	if (page)
+	page = brd_lookup_page(brd, sector); /* 查询sector 对应的page, 一个sector 512字节， */
+	if (page) /* 然后返回这个 page，因为ramdisk是uboot拷贝到了内存中，所以应该都是常驻在内存中的，如果没有的话，走下面的申请流程，并插到到 brd 的 radix tree中 */
 		return page;
 
 	/*
@@ -189,6 +189,7 @@ static int copy_to_brd_setup(struct brd_device *brd, sector_t sector, size_t n)
 /*
  * Copy n bytes from src to the brd starting at sector. Does not sleep.
  */
+/* 拷贝数据 到 brd(block ramdisk) 设备 ==> 计算出sector(512字节) 的 偏移地址，然后从源地址出拷贝数据到dst */
 static void copy_to_brd(struct brd_device *brd, const void *src,
 			sector_t sector, size_t n)
 {
@@ -198,12 +199,12 @@ static void copy_to_brd(struct brd_device *brd, const void *src,
 	size_t copy;
 
 	copy = min_t(size_t, n, PAGE_SIZE - offset);
-	page = brd_lookup_page(brd, sector);
+	page = brd_lookup_page(brd, sector); /* brd是通过radix tree 来管理所有的page的，这里传入sector，sector转换为地址，再通过地址 来搜索radix tree，来找到对应的page */
 	BUG_ON(!page);
 
-	dst = kmap_atomic(page);
-	memcpy(dst + offset, src, copy);
-	kunmap_atomic(dst);
+	dst = kmap_atomic(page); /* 将 page进行映射，对应的CPU可使用的虚拟地址就是 dst */
+	memcpy(dst + offset, src, copy); /* 从src拷贝数据 到 dst */
+	kunmap_atomic(dst); /* 数据拷贝完了后，将映射解除 */
 
 	if (copy < n) {
 		src += copy;
@@ -267,19 +268,19 @@ static int brd_do_bvec(struct brd_device *brd, struct page *page,
 	void *mem;
 	int err = 0;
 
-	if (op_is_write(op)) {
-		err = copy_to_brd_setup(brd, sector, len);
+	if (op_is_write(op)) { /* 这里有个疑问：为啥read 不需要走这个流程？？ */
+		err = copy_to_brd_setup(brd, sector, len); /* 查找sector对应的page 是否存在，不存在的话申请一块page，插入到 brd的 radix tree中 */
 		if (err)
 			goto out;
 	}
 	/* 将page 映射到 虚拟地址 mem上 */
 	mem = kmap_atomic(page);
-	if (!op_is_write(op)) { /* read */
-		copy_from_brd(mem + off, brd, sector, len);
+	if (!op_is_write(op)) { 
+		copy_from_brd(mem + off, brd, sector, len); /* 从 brd 读数据  */
 		flush_dcache_page(page);
-	} else {  /* write */
+	} else {
 		flush_dcache_page(page);
-		copy_to_brd(brd, mem + off, sector, len);
+		copy_to_brd(brd, mem + off, sector, len); /*写数据 到 brd */
 	}
 	kunmap_atomic(mem);
 
