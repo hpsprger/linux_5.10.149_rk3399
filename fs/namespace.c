@@ -946,6 +946,73 @@ static struct mount *skip_mnt_tree(struct mount *p)
  *
  * Note that this does not attach the mount to anything.
  */
+/*
+(gdb) p *fc
+$16 = {
+  ops = 0xffffffc010d946d0 <legacy_fs_context_ops>,
+  uapi_mutex = {
+    owner = {
+      counter = 0x0
+    },
+    wait_lock = {
+      {
+        rlock = {
+          raw_lock = {
+            {
+              val = {
+                counter = 0x0
+              },
+              {
+                locked = 0x0,
+                pending = 0x0
+              },
+              {
+                locked_pending = 0x0,
+                tail = 0x0
+              }
+            }
+          },
+          magic = 0xdead4ead,
+          owner_cpu = 0xffffffff,
+          owner = 0xffffffffffffffff
+        }
+      }
+    },
+    osq = {
+      tail = {
+        counter = 0x0
+      }
+    },
+    wait_list = {
+      next = 0xffffff80526b8430,
+      prev = 0xffffff80526b8430
+    }
+  },
+  fs_type = 0xffffffc011888ec8 <ext4_fs_type>,
+  fs_private = 0xffffff80526b7200,
+  sget_key = 0x0,
+  root = 0xffffff80351ec948,
+  user_ns = 0xffffffc01176f1d0 <init_user_ns>,
+  net_ns = 0xffffffc011997f80 <init_net>,
+  cred = 0xffffff8034e2d000,
+  log = {
+    prefix = 0xffffffc01106b51f "ext4",
+    log = 0x0
+  },
+  source = 0xffffff80526b7280 "/dev/root",
+  security = 0x0,
+  s_fs_info = 0x0,
+  sb_flags = 0x8000,
+  sb_flags_mask = 0x0,
+  s_iflags = 0x0,
+  lsm_flags = 0x0,
+  purpose = FS_CONTEXT_FOR_MOUNT,
+  phase = FS_CONTEXT_CREATE_PARAMS,
+  need_free = 0x1,
+  global = 0x0,
+  oldapi = 0x0
+}
+*/
 struct vfsmount *vfs_create_mount(struct fs_context *fc)
 {
 	struct mount *mnt;
@@ -953,6 +1020,10 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 	if (!fc->root)
 		return ERR_PTR(-EINVAL);
 
+	/*
+	(gdb) p fc->source 
+	$14 = 0xffffff80526b7280 "/dev/root"
+	*/
 	mnt = alloc_vfsmnt(fc->source ?: "none");
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
