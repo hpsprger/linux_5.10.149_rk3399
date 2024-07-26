@@ -121,6 +121,14 @@ static void __init handle_initrd(void)
 	}
 }
 
+/* 
+   !!!!!! 
+   这里 先通过 create_dev 创建设备节点 /dev/ram， 并绑定了对应的设备号Root_RAM0
+   然后后面 rd_load_image 里面 open 了 这个设备节点 "/dev/ram"，然后直接写这个设备节点
+   这种方式其实就是 我们平常用到的dd命令去读写裸设备的方式，跨过文件系统读写裸设备的方式了
+   dd  if=/dev/sda   of=/path/to/image.img bs=1G count=10 
+   读写的具体原理参考我的文章:  D:\BaiduSyncdisk\PC资料文件夹1\linux\linux_notes_private\文件系统\3-设备节点与设备节点号 的配合使用方法.emmx
+ */
 bool __init initrd_load(void)
 {
 	if (mount_initrd) {

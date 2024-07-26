@@ -184,6 +184,14 @@ static unsigned long nr_blocks(struct file *file)
 }
 
 /* rockllee: rd_load_image 把 /initrd.image（in_file）文件里面的数据 拷贝到 设备节点 /dev/ram（out_file）   */
+/* 
+   !!!!!! 
+   这里 先通过 create_dev 创建设备节点 /dev/ram， 并绑定了对应的设备号Root_RAM0
+   然后后面 rd_load_image 里面 open 了 这个设备节点 "/dev/ram"，然后直接写这个设备节点
+   这种方式其实就是 我们平常用到的dd命令去读写裸设备的方式，跨过文件系统读写裸设备的方式了
+   dd  if=/dev/sda   of=/path/to/image.img bs=1G count=10 
+   读写的具体原理参考我的文章:  D:\BaiduSyncdisk\PC资料文件夹1\linux\linux_notes_private\文件系统\3-设备节点与设备节点号 的配合使用方法.emmx
+ */
 int __init rd_load_image(char *from)
 {
 	int res = 0;
@@ -196,7 +204,14 @@ int __init rd_load_image(char *from)
 	char rotator[4] = { '|' , '/' , '-' , '\\' };
 #endif
 	/* 打开设备节点 /dev/ram */
-	/* struct file *filp_open(const char *filename, int flags, umode_t mode) */
+	/* 
+	!!!!!! 
+	这里 先通过 create_dev 创建设备节点 /dev/ram， 并绑定了对应的设备号Root_RAM0
+	然后后面 rd_load_image 里面 open 了 这个设备节点 "/dev/ram"，然后直接写这个设备节点
+	这种方式其实就是 我们平常用到的dd命令去读写裸设备的方式，跨过文件系统读写裸设备的方式了
+	dd  if=/dev/sda   of=/path/to/image.img bs=1G count=10 
+	读写的具体原理参考我的文章:  D:\BaiduSyncdisk\PC资料文件夹1\linux\linux_notes_private\文件系统\3-设备节点与设备节点号 的配合使用方法.emmx
+	*/
 	out_file = filp_open("/dev/ram", O_RDWR, 0);
 	if (IS_ERR(out_file))
 		goto out;
