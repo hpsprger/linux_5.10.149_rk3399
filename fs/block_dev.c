@@ -1464,7 +1464,7 @@ EXPORT_SYMBOL_GPL(bdev_disk_changed);
  *    mutex_lock_nested(whole->bd_mutex, 1)
  */
 
-static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
+static int __attribute__((optimize("O0"))) __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
 		int for_part)
 {
 	struct block_device *whole = NULL, *claiming = NULL;
